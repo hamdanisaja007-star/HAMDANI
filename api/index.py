@@ -5,18 +5,17 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "<h1>SIKEPAL ONLINE</h1><p>Kalau muncul tulisan ini, berarti Vercel sudah SEMBUH. Kabari saya Mas!</p>"
+    return "<h1>SIKEPAL ONLINE</h1><p>Vercel sudah AKTIF! Kabari saya kalau sudah muncul tulisan ini Mas!</p>"
 
 @app.route('/handler', methods=['POST'])
 def handler():
     data = request.json
-    # Link Ngrok Mas Hamdani
     URL_LAPTOP = "https://plastered-nonsubtly-tamera.ngrok-free.dev/jalankan-robot"
     try:
         response = requests.post(URL_LAPTOP, json=data, timeout=5)
-        return jsonify({"status": "Sinyal Terkirim!", "detail": response.json()})
+        return jsonify({"status": "Sinyal Terkirim!"})
     except:
         return jsonify({"status": "Laptop Offline"})
 
-if __name__ == "__main__":
-    app.run()
+# PENTING: Jangan pakai app.run() di Vercel
+# Cukup biarkan seperti ini agar Vercel yang menjalankan
