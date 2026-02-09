@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-# --- TEMPLATE HTML TETAP SAMA ---
+# --- TEMPLATE HTML ---
 HTML_FULL = """
 <!DOCTYPE html>
 <html lang="id">
@@ -94,25 +94,16 @@ HTML_FULL = """
 def index():
     return render_template_string(HTML_FULL)
 
-# --- BAGIAN PERBAIKAN JEMBATAN KE NGROK ---
 @app.route('/handler', methods=['POST'])
 def handler():
     data = request.json
-    
-    # LINK NGROK MAS HAMDANI
     URL_LAPTOP = "https://plastered-nonsubtly-tamera.ngrok-free.dev/jalankan-robot"
-    
     try:
-        # Kirim sinyal ke laptop Mas
         response = requests.post(URL_LAPTOP, json=data, timeout=5)
-        return jsonify({"status": "Robot Berhasil Dipanggil!", "detail": response.json()})
+        return jsonify({"status": "Robot Berhasil!", "detail": response.json()})
     except:
-        return jsonify({"status": "Laptop Offline / Ngrok Mati!"})
+        return jsonify({"status": "Laptop Offline!"})
 
-# Ini supaya Vercel bisa melihat aplikasinya
-
-
+# Cukup begini saja Mas, tidak perlu app = app
 if __name__ == "__main__":
-    app.run(debug=True)
-
-
+    app.run()
