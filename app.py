@@ -1,8 +1,9 @@
 from flask import Flask, render_template_string, jsonify, request
+import requests
 
 app = Flask(__name__)
 
-# --- TEMPLATE HTML TETAP SAMA TAPI DITAMBAH FUNGSI PANGGIL ROBOT ---
+# --- TEMPLATE HTML TETAP SAMA ---
 HTML_FULL = """
 <!DOCTYPE html>
 <html lang="id">
@@ -18,7 +19,7 @@ HTML_FULL = """
         .panel { background: rgba(5, 5, 10, 0.95); border: 1px solid #333; border-top: 4px solid var(--cyan); padding: 20px; }
         .visual-box { width: 100%; height: 150px; margin-bottom: 15px; border: 1px solid #444; background: #000; overflow: hidden; }
         .visual-box video, .visual-box img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--cyan); color: white; font-weight: bold; cursor: pointer; text-align: left; }
+        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--cyan); color: white; font-weight: bold; cursor: pointer; text-align: left; transition: 0.3s; }
         .btn-cyber:hover { background: var(--cyan); color: black; box-shadow: 0 0 20px var(--cyan); }
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 9999; display: flex; justify-content: center; align-items: center; }
     </style>
@@ -27,8 +28,8 @@ HTML_FULL = """
     <div id="login-overlay">
         <div style="border:2px solid var(--cyan); padding:40px; text-align:center; background:#05050a;">
             <h2 style="color:var(--cyan);">SIKEPAL LOGIN</h2>
-            <input type="password" id="pass" style="padding:10px; text-align:center;" placeholder="ACCESS KEY">
-            <button class="btn-cyber" style="margin-top:20px; text-align:center;" onclick="checkLogin()">AUTHORIZE</button>
+            <input type="password" id="pass" style="padding:10px; text-align:center; background:#111; color:white; border:1px solid var(--cyan);" placeholder="ACCESS KEY">
+            <button class="btn-cyber" style="margin-top:20px; text-align:center; width:100%;" onclick="checkLogin()">AUTHORIZE SYSTEM</button>
         </div>
     </div>
 
@@ -57,7 +58,8 @@ HTML_FULL = """
             <div class="visual-box">
                 <img src="https://github.com/hamdanisaja007-star/HAMDANI/raw/main/iklan2.jpg">
             </div>
-            <a href="https://kinerja.bkn.go.id" target="_blank" class="btn-cyber">🔗 E-KINERJA</a>
+            <a href="https://kinerja.bkn.go.id" target="_blank" class="btn-cyber" style="text-decoration:none;">🔗 E-KINERJA</a>
+            <a href="https://evisum4.bkkbn.go.id" target="_blank" class="btn-cyber" style="text-decoration:none;">🔗 E-VISUM</a>
         </div>
     </div>
 
@@ -65,12 +67,11 @@ HTML_FULL = """
         function checkLogin() {
             if(document.getElementById('pass').value === 'BIMZ2026') {
                 document.getElementById('login-overlay').style.display = 'none';
-            } else { alert('DENIED'); }
+            } else { alert('ACCESS DENIED'); }
         }
 
-        // FUNGSI UNTUK MEMANGGIL HANDLER ROBOT
         function runRobot(nama, target) {
-            alert("Mempersiapkan Modul Robot: " + nama);
+            console.log("Memanggil robot...");
             fetch('/handler', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -78,7 +79,10 @@ HTML_FULL = """
             })
             .then(res => res.json())
             .then(data => {
-                console.log("Robot command sent:", data);
+                alert("Status: " + data.status);
+            })
+            .catch(err => {
+                alert("Gagal terhubung ke laptop!");
             });
         }
     </script>
@@ -90,13 +94,20 @@ HTML_FULL = """
 def index():
     return render_template_string(HTML_FULL)
 
-# INI ADALAH JEMBATANNYA
+# --- BAGIAN PERBAIKAN JEMBATAN KE NGROK ---
 @app.route('/handler', methods=['POST'])
 def handler():
     data = request.json
-    print(f"Menerima perintah untuk menjalankan: {data['name']}")
-    # Di sini nanti kita hubungkan dengan API Robot di komputer lokal Mas
-    return jsonify({"status": "command_sent", "module": data['target']})
+    
+    # LINK NGROK MAS HAMDANI
+    URL_LAPTOP = "https://plastered-nonsubtly-tamera.ngrok-free.dev/jalankan-robot"
+    
+    try:
+        # Kirim sinyal ke laptop Mas
+        response = requests.post(URL_LAPTOP, json=data, timeout=5)
+        return jsonify({"status": "Robot Berhasil Dipanggil!", "detail": response.json()})
+    except:
+        return jsonify({"status": "Laptop Offline / Ngrok Mati!"})
 
 if __name__ == "__main__":
     app.run()
