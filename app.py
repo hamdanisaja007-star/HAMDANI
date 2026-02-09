@@ -1,21 +1,25 @@
 from flask import Flask, render_template, request, jsonify
+import os
 
-# Flask secara otomatis akan mencari folder bernama 'templates'
 app = Flask(__name__)
 
 @app.route('/')
-def login_page():
-    # Flask akan otomatis mencari templates/login.html
-    return render_template('login.html')
+def debug_check():
+    # Ini akan mengecek apakah folder templates dan isinya benar-benar ada
+    if not os.path.exists('templates'):
+        return "ERROR: Folder 'templates' (huruf kecil semua) tidak ditemukan!"
+    
+    files = os.listdir('templates')
+    
+    # Cek file login.html
+    if 'login.html' in files:
+        return render_template('login.html')
+    else:
+        return f"ERROR: File 'login.html' tidak ada di folder templates. Yang ada cuma: {files}"
 
 @app.route('/dashboard')
-def dashboard_page():
-    # Flask akan otomatis mencari templates/index.html
+def dashboard():
     return render_template('index.html')
-
-@app.route('/handler', methods=['POST'])
-def handler():
-    return jsonify({"status": "success"})
 
 if __name__ == '__main__':
     app.run()
