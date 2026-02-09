@@ -1,16 +1,18 @@
 from flask import Flask, render_template, request, jsonify
+import os
 
-# Flask akan otomatis mencari folder 'templates' yang sudah Bapak buat
-app = Flask(__name__)
+# Kode ini akan otomatis nyari alamat folder yang benar
+base_dir = os.path.dirname(os.path.abspath(__file__))
+template_dir = os.path.join(base_dir, 'templates')
+
+app = Flask(__name__, template_folder=template_dir)
 
 @app.route('/')
 def login_page():
-    # Ini akan membuka file login.html di folder templates
     return render_template('login.html')
 
 @app.route('/dashboard')
 def dashboard_page():
-    # Ini akan membuka file index.html di folder templates
     return render_template('index.html')
 
 @app.route('/handler', methods=['POST'])
