@@ -110,8 +110,9 @@ def handler():
         return jsonify({"status": "Laptop Offline / Ngrok Mati!"})
 
 # Ini supaya Vercel bisa melihat aplikasinya
-app = app
+
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
