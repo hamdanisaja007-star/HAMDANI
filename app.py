@@ -1,27 +1,23 @@
 from flask import Flask, render_template, request, jsonify
+import os
 
-# Kita arahkan Flask untuk mencari file Bapak di folder utama
+# Paksa Flask mencari file HTML di folder yang sama dengan app.py
 app = Flask(__name__, template_folder='.')
 
 @app.route('/')
 def login_page():
-    # Ini akan membuka file login.html milik Bapak
+    # Pastikan file Bapak namanya persis: login.html
     return render_template('login.html')
 
 @app.route('/dashboard')
 def dashboard_page():
-    # Ini akan membuka file index.html (Command Center) milik Bapak
+    # Pastikan file Bapak namanya persis: index.html
     return render_template('index.html')
-
-@app.route('/pelayanan_kb')
-def pelayanan_kb():
-    # Ini akan membuka file pelayanan_kb.html milik Bapak
-    return render_template('pelayanan_kb.html')
 
 @app.route('/handler', methods=['POST'])
 def handler():
-    # Ini supaya tombol-tombol di web Bapak bisa diklik tanpa error
     return jsonify({"status": "success"})
 
+# Ini penting untuk Vercel agar tidak crash
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=False)
