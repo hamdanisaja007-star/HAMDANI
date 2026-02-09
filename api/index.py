@@ -1,21 +1,29 @@
-from flask import Flask, jsonify, request
-import requests
+from flask import Flask, render_template, jsonify
+import json
+import os
 
-app = Flask(__name__)
+# PENTING: ../templates artinya naik satu tingkat keluar dari folder api
+app = Flask(__name__, template_folder='../templates')
 
 @app.route('/')
-def home():
-    return "<h1>SIKEPAL ONLINE</h1><p>Vercel sudah AKTIF! Kabari saya kalau sudah muncul tulisan ini Mas!</p>"
+def dashboard():
+    # Menampilkan Dashboard Utama SIKEPAL ULTRA
+    return render_template('index.html')
 
-@app.route('/handler', methods=['POST'])
-def handler():
-    data = request.json
-    URL_LAPTOP = "https://plastered-nonsubtly-tamera.ngrok-free.dev/jalankan-robot"
-    try:
-        response = requests.post(URL_LAPTOP, json=data, timeout=5)
-        return jsonify({"status": "Sinyal Terkirim!"})
-    except:
-        return jsonify({"status": "Laptop Offline"})
+@app.route('/pelayanan-kb')
+def pelayanan_kb():
+    # Menampilkan Modul Pelayanan KB yang Mas buat tadi
+    return render_template('pelayanan_kb.html')
 
-# PENTING: Jangan pakai app.run() di Vercel
-# Cukup biarkan seperti ini agar Vercel yang menjalankan
+@app.route('/api/iklan')
+def get_iklan():
+    # Mengambil data iklan dari root folder
+    path_iklan = os.path.join(os.path.dirname(__file__), '../iklan.json')
+    if os.path.exists(path_iklan):
+        with open(path_iklan, 'r') as f:
+            data = json.load(f)
+        return jsonify(data)
+    return jsonify([])
+
+# Supaya Vercel bisa mengenali app ini
+app.debug = True
