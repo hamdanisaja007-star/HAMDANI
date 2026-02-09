@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Data simulasi desa
+# Data desa untuk dashboard
 DESA_DATA = {
     "Bojongraharja": {"user": "opbojongraharja.0210", "pass": "Cikembar@0210"},
     "Cimanggu": {"user": "opcimanggu.0210", "pass": "Cikembar@0210"},
@@ -10,27 +10,31 @@ DESA_DATA = {
 }
 
 @app.route('/')
-def index():
+def home():
+    # INI HALAMAN PERTAMA: Munculkan Login
     return render_template('login.html')
 
-# Kita buat rute ini bisa menerima GET karena JavaScript Bapak pakai window.location.href
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', desa=DESA_DATA)
+    # INI HALAMAN KEDUA: Munculkan Command Center (index.html)
+    # Kita kirim data DESA_DATA supaya bisa dibaca di dashboard
+    return render_template('index.html', desa=DESA_DATA)
 
-@app.route('/start_robot', methods=['POST'])
-def start_robot():
+@app.route('/handler', methods=['POST'])
+def handler():
+    # Fungsi ini untuk menjalankan tombol-tombol di Dashboard
     data = request.get_json()
     if not data:
-        return jsonify({"status": "error", "message": "No data provided"}), 400
-        
-    desa = data.get('desa')
-    kb_type = data.get('kb_type')
+        return jsonify({"status": "error"}), 400
     
-    return jsonify({
-        "status": "success",
-        "message": f"Robot SIKEPAL berhasil sinkronisasi data {kb_type} untuk Desa {desa} ke SIGA!"
-    })
+    target = data.get('target')
+    mode = data.get('mode')
+
+    if mode == 'web':
+        url = target if target.startswith('http') else f"https://{target}"
+        return jsonify({"status": "redirect", "url": url})
+    
+    return jsonify({"status": "success", "message": "Module Executed"})
 
 if __name__ == '__main__':
     app.run()
