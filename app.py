@@ -1,206 +1,89 @@
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, render_template_string, jsonify
 
 app = Flask(__name__)
 
-# --- 1. HALAMAN LOGIN (Video Background) ---
-login_html = """
+# --- HTML LOGIN ---
+login_page = """
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>SIKEPAL V.ULTRA - ACCESS POINT</title>
+    <title>SIKEPAL ACCESS</title>
     <style>
-        :root { --cyan: #00f0ff; --pink: #ff00ff; --dark: #020205; }
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: black; font-family: 'Consolas', monospace; }
-        #bg-video { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -2; filter: brightness(0.4) contrast(1.2); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 20%, var(--dark) 80%); z-index: -1; }
-        .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; gap: 40px; }
-        .login-box { width: 380px; padding: 40px; background: rgba(5, 5, 10, 0.9); border: 1px solid var(--cyan); box-shadow: 0 0 30px var(--cyan); text-align: center; }
-        .login-box h2 { color: var(--cyan); letter-spacing: 5px; margin: 0; font-family: 'Impact'; font-size: 35px; text-shadow: 0 0 10px var(--cyan); }
-        .input-group { margin: 30px 0; }
-        .input-group input { width: 100%; padding: 15px; background: rgba(0, 240, 255, 0.1); border: 1px solid var(--cyan); color: var(--cyan); font-size: 20px; text-align: center; outline: none; box-sizing: border-box; }
-        .btn-login { width: 100%; padding: 15px; background: var(--cyan); border: none; color: black; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; text-transform: uppercase; }
-        .btn-login:hover { background: white; box-shadow: 0 0 25px var(--cyan); letter-spacing: 2px; }
+        body { background: #000; color: #00f0ff; font-family: 'Consolas', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { border: 1px solid #00f0ff; padding: 40px; text-align: center; box-shadow: 0 0 20px #00f0ff; }
+        input { background: #111; border: 1px solid #00f0ff; color: #00f0ff; padding: 10px; margin: 10px; text-align: center; }
+        button { background: #00f0ff; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <video autoplay muted loop playsinline id="bg-video">
-        <source src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/iklan_bkkbn.mp4" type="video/mp4">
-    </video>
-    <div class="overlay"></div>
-    <div class="login-container">
-        <div class="login-box">
-            <h2>SIKEPAL<br><span style="font-size: 16px; letter-spacing: 2px;">V.ULTRA ACCESS</span></h2>
-            <div class="input-group">
-                <input type="password" id="pass" placeholder="ENTER ACCESS KEY" autocomplete="off">
-            </div>
-            <button class="btn-login" onclick="checkAuth()">INITIALIZE ACCESS</button>
-        </div>
+    <div class="box">
+        <h2>SIKEPAL V.ULTRA</h2>
+        <input type="password" id="p" placeholder="PASSWORD">
+        <button onclick="go()">ENTER</button>
     </div>
     <script>
-        function checkAuth() {
-            if (document.getElementById('pass').value === "BIMZ2026") {
-                window.location.href = "/dashboard";
-            } else {
-                alert("INVALID ACCESS KEY!");
-            }
-        }
+        function go() { if(document.getElementById('p').value==='BIMZ2026') window.location.href='/dashboard'; else alert('WRONG'); }
     </script>
 </body>
 </html>
 """
 
-# --- 2. DASHBOARD UTAMA (SESUAI REQUEST BAPAK TANPA POTONGAN) ---
-dashboard_html = """
+# --- HTML DASHBOARD (SESUAI DESAIN BAPAK) ---
+dashboard_page = """
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SIKEPAL V.ULTRA - COMMAND CENTER</title>
+    <title>SIKEPAL V.ULTRA</title>
     <style>
-        :root { --cyan: #00f0ff; --pink: #ff00ff; --dark: #020205; --green: #0f0; }
-        body {
-            background: var(--dark); color: white; font-family: 'Consolas', monospace;
-            margin: 0; padding: 20px; overflow-x: hidden;
-            background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
-            background-size: 30px 30px;
-        }
-        .header {
-            border: 2px solid var(--cyan); padding: 15px; text-align: center;
-            box-shadow: 0 0 20px var(--cyan); margin-bottom: 20px; background: rgba(0,0,0,0.9);
-        }
-        .header h1 { margin: 0; font-size: 45px; letter-spacing: 5px; color: var(--cyan); text-shadow: 0 0 15px var(--cyan); font-family: 'Impact'; }
-        .hud-bar { display: flex; justify-content: space-between; padding: 10px 20px; color: var(--pink); font-size: 14px; font-weight: bold; }
-        .ticker-wrap { width: 100%; overflow: hidden; background: rgba(255, 0, 255, 0.1); border-bottom: 1px solid var(--pink); border-top: 1px solid var(--pink); margin-bottom: 20px; white-space: nowrap; }
-        .ticker { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; color: var(--pink); font-weight: bold; font-size: 14px; padding: 10px 0; }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-        .main-grid { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 20px; }
-        .panel { background: rgba(5, 5, 10, 0.95); border: 1px solid #333; border-top: 4px solid var(--cyan); padding: 20px; position: relative; }
-        .panel-title { color: var(--cyan); font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
-        .visual-box { width: 100%; height: 130px; margin-bottom: 15px; border: 1px solid #222; overflow: hidden; position: relative; background: #000; }
-        .visual-box img, .visual-box video { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.8s ease-in-out; opacity: 0.9; }
-        .ads-label { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: var(--cyan); font-size: 10px; text-align: center; padding: 5px 0; border-top: 1px solid var(--cyan); text-transform: uppercase; }
-        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--cyan); color: white; font-weight: bold; cursor: pointer; text-align: left; transition: 0.3s; }
-        .btn-cyber:hover { background: var(--cyan); color: black; box-shadow: 0 0 20px var(--cyan); transform: scale(1.02); }
-        .btn-pink { border-color: var(--pink); color: var(--pink); }
-        .btn-pink:hover { background: var(--pink); color: white; box-shadow: 0 0 20px var(--pink); }
-        .affiliate-mini { border: 1px dashed var(--green); background: rgba(0, 255, 0, 0.05); padding: 8px; margin-top: 10px; transition: 0.3s; }
-        .price-tag { color: var(--green); font-size: 10px; font-weight: bold; display: block; margin-bottom: 3px; }
-        .lock-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .lock-box { width: 350px; padding: 30px; border: 2px solid var(--cyan); background: #05050a; text-align: center; box-shadow: 0 0 30px var(--cyan); }
-        .lock-input { width: 100%; padding: 10px; margin: 15px 0; background: #111; border: 1px solid var(--cyan); color: var(--cyan); text-align: center; font-family: 'Consolas'; font-size: 18px; outline: none; box-sizing: border-box; }
-        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-        .footer { text-align: center; margin-top: 30px; padding: 15px; font-size: 12px; color: #666; border-top: 1px solid #222; }
-        .scanline { width: 100%; height: 100px; background: linear-gradient(0deg, transparent, rgba(0, 240, 255, 0.05), transparent); position: fixed; top: -100px; left: 0; z-index: 100; animation: scanning 6s linear infinite; pointer-events: none; }
-        @keyframes scanning { from { top: -100px; } to { top: 100%; } }
+        :root { --cyan: #00f0ff; --pink: #ff00ff; --dark: #020205; }
+        body { background: var(--dark); color: white; font-family: 'Consolas', monospace; margin: 0; padding: 20px; }
+        .header { border: 2px solid var(--cyan); padding: 15px; text-align: center; box-shadow: 0 0 20px var(--cyan); margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 35px; color: var(--cyan); font-family: 'Impact'; }
+        .main-grid { display: grid; grid-template-columns: 1fr 300px 1fr; gap: 20px; }
+        .panel { background: rgba(5, 5, 10, 0.95); border: 1px solid #333; border-top: 4px solid var(--cyan); padding: 20px; }
+        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0,240,255,0.05); border: 1px solid var(--cyan); color: white; cursor: pointer; text-align: left; }
+        .btn-cyber:hover { background: var(--cyan); color: black; }
+        .ticker { background: rgba(255,0,255,0.1); color: var(--pink); padding: 10px; border: 1px solid var(--pink); margin-bottom: 20px; overflow: hidden; }
     </style>
 </head>
 <body>
-    <div class="scanline"></div>
-    <div class="header">
-        <h1>SIKEPAL V.ULTRA</h1>
-        <div style="font-size: 13px; color: var(--pink); letter-spacing: 2px;">OFFICIAL LICENSE: DHEDE_BIMZ & RAHMAN (2024-2026)</div>
-    </div>
-    <div class="hud-bar">
-        <div id="clock">TIME: 00:00:00</div>
-        <div>STATION: CIKEMBAR_CORE_0210</div>
-        <div style="color: #0f0;" id="net-status">● SYSTEM ONLINE</div>
-    </div>
-    <div class="ticker-wrap">
-        <div class="ticker" id="running-text">INITIALIZING QUANTUM LINK... WAITING FOR REMOTE BROADCAST...</div>
-    </div>
+    <div class="header"><h1>SIKEPAL V.ULTRA</h1></div>
+    <div class="ticker">SYSTEM ONLINE | STATION: CIKEMBAR_CORE</div>
     <div class="main-grid">
         <div class="panel">
-            <div class="panel-title">📂 MODULE ENTRI SIGA</div>
-            <div class="visual-box" id="box-1"><img id="img-1" src=""><div class="ads-label" id="txt-1">LOADING ADS...</div></div>
-            <div id="siga-locked" style="text-align: center; padding: 10px;">
-                <div style="font-size: 40px; margin-bottom: 10px;">🔐</div>
-                <button class="btn-cyber" style="text-align: center;" onclick="showLock('FOLDER SIGA', 'all', 'folder_siga')">🔓 OPEN SIGA MODULES</button>
-            </div>
-            <div id="siga-unlocked" style="display: none;">
-                <button class="btn-cyber" onclick="processExe('🏥 PELAYANAN KB', 'pelayanan_kb', 'modul')">🏥 PELAYANAN KB</button>
-                <button class="btn-cyber" onclick="processExe('👤 DATA PPKBD', 'ppkbd', 'modul')">👤 DATA PPKBD</button>
-                <button class="btn-cyber" onclick="processExe('👶 KELOMPOK BKB', 'bkb', 'modul')">👶 KELOMPOK BKB</button>
-                <button class="btn-cyber" onclick="processExe('🧑 KELOMPOK BKR', 'bkr', 'modul')">🧑 KELOMPOK BKR</button>
-                <button class="btn-cyber" onclick="processExe('👴 KELOMPOK BKL', 'bkl', 'modul')">👴 KELOMPOK BKL</button>
-                <button class="btn-cyber" onclick="processExe('👥 KELOMPOK PIK-R', 'pikr', 'modul')">👥 KELOMPOK PIK-R</button>
-                <button class="btn-cyber" onclick="processExe('💰 KELOMPOK UPPKA', 'uppka', 'modul')">💰 KELOMPOK UPPKA</button>
-                <button class="btn-cyber" style="border-color: #ff4444; color: #ff4444; margin-top: 10px; font-size: 10px; text-align: center;" onclick="lockSiga()">🔒 CLOSE FOLDER</button>
-            </div>
+            <h3 style="color:var(--cyan)">📂 MODULE SIGA</h3>
+            <button class="btn-cyber" onclick="window.open('https://newsiga-siga.bkkbn.go.id')">🏥 PELAYANAN KB</button>
+            <button class="btn-cyber">👤 DATA PPKBD</button>
+            <button class="btn-cyber">👶 KELOMPOK BKB</button>
         </div>
         <div class="panel">
-            <div class="panel-title">📺 MEDIA MONITOR</div>
-            <div class="visual-box" style="border-color: var(--pink); height: 160px;" id="box-2">
-                <video id="video-ads" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                    <source src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/iklan_bkkbn.mp4" type="video/mp4">
-                </video>
-                <div class="ads-label" id="txt-2" style="color: var(--pink);">EXCLUSIVE SPONSOR VIDEO</div>
-            </div>
-            <div style="color: var(--green); font-size: 11px; margin-bottom: 10px; text-align: center;">🛒 LOGISTIC CENTER</div>
-            <div class="affiliate-mini"><span class="price-tag">KERTAS HVS A4</span><button class="btn-cyber" style="border-color: var(--green); padding: 5px; font-size: 10px;">🛒 BELI SEKARANG</button></div>
-            <div class="affiliate-mini"><span class="price-tag">TINTA ORIGINAL</span><button class="btn-cyber" style="border-color: var(--green); padding: 5px; font-size: 10px;">🛒 CEK HARGA</button></div>
-            <button class="btn-cyber btn-pink" style="margin-top: 15px;" onclick="exe('CHANNEL BIMZ', 'youtube.com/@bimz82official50', 'web')">▶ BIMZ82 OFFICIAL</button>
+            <h3 style="color:var(--pink)">📺 MONITOR</h3>
+            <div style="height:100px; background:black; border:1px solid var(--pink);"></div>
         </div>
         <div class="panel">
-            <div class="panel-title">🌐 EXTERNAL HUB</div>
-            <div class="visual-box" id="box-3"><img id="img-3" src=""><div class="ads-label" id="txt-3">PARTNER ADS</div></div>
-            <button class="btn-cyber" onclick="exe('E-KINERJA', 'kinerja.bkn.go.id', 'web')">🔗 PORTAL E-KINERJA</button>
-            <button class="btn-cyber" onclick="exe('E-VISUM', 'evisum4.bkkbn.go.id', 'web')">🔗 E-VISUM WEB</button>
-            <button class="btn-cyber" onclick="exe('NEWSIGA', 'newsiga-siga.bkkbn.go.id', 'web')">🔗 WEB NEWSIGA</button>
-            <button class="btn-cyber" onclick="exe('GOOGLE', 'google.com', 'web')">🔗 GOOGLE SEARCH</button>
+            <h3 style="color:var(--cyan)">🌐 HUB</h3>
+            <button class="btn-cyber" onclick="window.open('https://kinerja.bkn.go.id')">🔗 E-KINERJA</button>
+            <button class="btn-cyber" onclick="window.open('https://evisum4.bkkbn.go.id')">🔗 E-VISUM</button>
         </div>
     </div>
-    <div class="tools-grid">
-        <div class="panel" style="border-top-color: #ff0;"><div class="panel-title" style="color: #ff0;">🛠️ TOOLS SYSTEM</div><button class="btn-cyber" style="border-color: #ff0;">🤖 GENERATE DUPAK</button></div>
-        <div class="panel" style="border-top-color: #0f0;"><div class="panel-title" style="color: #0f0;">📑 PB TOOLS</div><button class="btn-cyber" style="border-color: #0f0;">📋 TOOLS SPJ</button></div>
-    </div>
-    <div class="lock-overlay" id="lock-screen">
-        <div class="lock-box">
-            <div style="color: var(--cyan); font-weight: bold; margin-bottom: 10px;">🔐 ACCESS RESTRICTED</div>
-            <input type="password" id="access-key" class="lock-input" placeholder="ENTER ACCESS KEY">
-            <button class="btn-cyber" onclick="validateKey()">UNLOCK MODULE</button>
-            <button style="color: red; background: none; border: none; cursor: pointer; margin-top: 10px;" onclick="hideLock()">CANCEL</button>
-        </div>
-    </div>
-    <div class="footer">DEDE BIMZ & RAHMAN &copy; 2026 | SIKEPAL ULTRA V.2.0</div>
-    <script>
-        function updateClock() { document.getElementById('clock').innerText = "TIME: " + new Date().toLocaleTimeString(); }
-        setInterval(updateClock, 1000);
-        const SECRET_KEY = "BIMZ2026";
-        let currentLockedAction = null;
-        function exe(n, t, m) { if (m === 'web') window.open('https://' + t, '_blank'); else showLock(n, t, m); }
-        function showLock(n, t, m) { currentLockedAction = {n, t, m}; document.getElementById('lock-screen').style.display = 'flex'; }
-        function hideLock() { document.getElementById('lock-screen').style.display = 'none'; }
-        function validateKey() {
-            if (document.getElementById('access-key').value === SECRET_KEY) {
-                hideLock();
-                if (currentLockedAction.m === 'folder_siga') {
-                    document.getElementById('siga-locked').style.display = 'none';
-                    document.getElementById('siga-unlocked').style.display = 'block';
-                }
-            } else { alert("ACCESS DENIED!"); }
-        }
-        function lockSiga() {
-            document.getElementById('siga-locked').style.display = 'block';
-            document.getElementById('siga-unlocked').style.display = 'none';
-        }
-        function processExe(n, t, m) { alert("Processing: " + n); }
-    </script>
+    <p style="text-align:center;"><a href="/" style="color:red">[ LOGOUT ]</a></p>
 </body>
 </html>
 """
 
 @app.route('/')
 def home():
-    return render_template_string(login_html)
+    return render_template_string(login_page)
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template_string(dashboard_html)
+    return render_template_string(dashboard_page)
 
+# Ini penting agar Vercel tidak error saat memanggil route /handler
 @app.route('/handler', methods=['POST'])
 def handler():
-    return jsonify({"status": "success"})
+    return jsonify({"status": "ok"})
 
-if __name__ == '__main__':
-    app.run()
+# Baris ini krusial untuk Flask di Vercel
+app.debug = True
