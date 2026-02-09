@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SIKEPAL V.ULTRA - MODULE CONFIG</title>
+    <style>
+        :root { --cyan: #00f0ff; --pink: #ff00ff; --yellow: #ff0; --dark: #020205; }
+        body {
+            background: var(--dark); color: white; font-family: 'Consolas', monospace;
+            margin: 0; padding: 40px;
+            background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .config-panel {
+            max-width: 700px; margin: 0 auto;
+            background: rgba(5, 5, 10, 0.95);
+            border: 1px solid var(--cyan); border-top: 4px solid var(--cyan);
+            padding: 30px; box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+        }
+        .title { color: var(--cyan); font-size: 22px; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 25px; text-transform: uppercase; text-shadow: 0 0 10px var(--cyan); }
+        
+        label { display: block; margin-top: 15px; color: var(--pink); font-size: 13px; font-weight: bold; letter-spacing: 1px; }
+        
+        select, input {
+            width: 100%; padding: 12px; margin-top: 5px;
+            background: rgba(0, 240, 255, 0.05); border: 1px solid #444;
+            color: white; font-family: 'Consolas', monospace; box-sizing: border-box; font-size: 14px;
+        }
+        select:focus, input:focus { border-color: var(--cyan); outline: none; box-shadow: 0 0 10px var(--cyan); }
+
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 15px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn-launch {
+            width: 100%; padding: 18px; margin-top: 30px;
+            background: transparent; border: 2px solid var(--cyan);
+            color: var(--cyan); font-weight: bold; font-size: 18px;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        .btn-launch:hover { background: var(--cyan); color: black; box-shadow: 0 0 40px var(--cyan); }
+        
+        .status-box { margin-top: 20px; font-size: 12px; color: var(--yellow); text-align: center; border: 1px dashed #444; padding: 10px; }
+        .back-link { display: block; margin-top: 25px; text-align: center; color: #666; text-decoration: none; font-size: 12px; }
+        .back-link:hover { color: var(--pink); text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="config-panel">
+        <div class="title">🛠️ TARGET: {{ modul_name }}</div>
+        
+        <div class="grid-2">
+            <div>
+                <label>📡 STATION (DESA):</label>
+                <select id="desa">
+                    {% for d in desas %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>🏥 PILIH FASKES:</label>
+                <select id="faskes">
+                    <option value="1">Faskes 1</option>
+                    <option value="2">Faskes 2</option>
+                    <option value="3">Faskes 3</option>
+                    <option value="4">Faskes 4</option>
+                    <option value="5">Faskes 5</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-3">
+            <div>
+                <label>📥 AWAL (EXCEL):</label>
+                <input type="number" id="awal" value="0">
+            </div>
+            <div>
+                <label>📤 AKHIR (EXCEL):</label>
+                <input type="number" id="akhir" value="10">
+            </div>
+            <div>
+                <label>📅 TANGGAL LAYAN:</label>
+                <input type="date" id="tanggal">
+            </div>
+        </div>
+
+        <label>💊 JENIS ALOKON / TINDAKAN:</label>
+        <select id="alokon">
+            <option>Pembinaan Pil Kombinasi</option>
+            <option>AB Pil Kombinasi</option>
+            <option>Pembinaan Suntikan 3 Bulanan Progestin</option>
+            <option>AB Suntikan 3 Bulanan Progestin</option>
+            <option>AB Implant 1 Batang</option>
+            <option>AC Implant 1 Batang</option>
+            <option>AB Implant 2 Batang</option>
+        </select>
+
+        <button class="btn-launch" onclick="launch()">🚀 LUNCURKAN ROBOT</button>
+        
+        <div id="status" class="status-box">SYSTEM READY: WAITING FOR COMMAND...</div>
+        
+        <a href="/" class="back-link">← KEMBALI KE COMMAND CENTER</a>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.getElementById('tanggal').valueAsDate = new Date();
+
+        function launch() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "SISTEM SEDANG BERJALAN... JANGAN TUTUP BROWSER";
+            statusDiv.style.color = "#0f0";
+
+            const data = {
+                name: "{{ modul_name }}",
+                target: "{{ modul_id }}",
+                mode: "robot",
+                desa: document.getElementById('desa').value,
+                faskes: document.getElementById('faskes').value,
+                awal: document.getElementById('awal').value,
+                akhir: document.getElementById('akhir').value,
+                tanggal: document.getElementById('tanggal').value,
+                alokon: document.getElementById('alokon').value
+            };
+
+            fetch('/handler', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if(resData.status === "launched") {
+                    statusDiv.innerText = "ROBOT BERHASIL DILUNCURKAN! PERIKSA JENDELA CHROME.";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

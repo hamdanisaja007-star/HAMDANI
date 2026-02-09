@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SIKEPAL V.ULTRA - PELAYANAN KB</title>
+    <style>
+        :root { --amber: #ffab00; --cyan: #00f0ff; --dark: #05050a; }
+        body { 
+            background: var(--dark); color: white; font-family: 'Consolas', monospace; padding: 20px; 
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 20px 20px;
+        }
+        .container { max-width: 600px; margin: auto; border: 1px solid var(--amber); padding: 25px; background: rgba(0,0,0,0.9); box-shadow: 0 0 20px rgba(255,171,0,0.2); }
+        h2 { color: var(--amber); text-align: center; border-bottom: 2px solid var(--amber); padding-bottom: 10px; margin-top: 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; color: var(--cyan); margin-bottom: 5px; font-size: 11px; letter-spacing: 1px; }
+        
+        /* Dropdown & Input Style - Black Background, White Text */
+        select, input { 
+            width: 100%; padding: 12px; background: #121212; border: 1px solid #333; 
+            color: white; font-family: 'Consolas', monospace; box-sizing: border-box; outline: none;
+        }
+        select:focus, input:focus { border-color: var(--amber); box-shadow: 0 0 5px var(--amber); }
+
+        /* Fix for Dropdown Options visibility */
+        select option { background: #121212; color: white; }
+
+        .auth-box { border-left: 3px solid var(--amber); padding-left: 15px; margin: 20px 0; background: rgba(255,171,0,0.05); padding-top: 10px; padding-bottom: 10px; }
+        
+        .btn-start { 
+            width: 100%; padding: 15px; background: var(--amber); border: none; 
+            color: black; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px;
+        }
+        .btn-start:hover { background: #fff; box-shadow: 0 0 15px var(--amber); }
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏥 MODUL PELAYANAN KB</h2>
+    
+    <div class="form-group">
+        <label>📍 PILIH DESA:</label>
+        <select id="desa" onchange="updateAuth()">
+            <option value="">- Pilih Desa -</option>
+            <option value="Bojongraharja">Bojongraharja</option>
+            <option value="Cimanggu">Cimanggu</option>
+            <option value="Bojong">Bojong</option>
+            <option value="Sukamulya">Sukamulya</option>
+            <option value="Sukamaju">Sukamaju</option>
+            <option value="Kertaraharja">Kertaraharja</option>
+            <option value="Parakanlima">Parakanlima</option>
+            <option value="Cikembar">Cikembar</option>
+            <option value="Cibatu">Cibatu</option>
+            <option value="Bojongkembar">Bojongkembar</option>
+        </select>
+    </div>
+
+    <div class="auth-box">
+        <div class="form-group">
+            <label>👤 USERNAME (AUTO):</label>
+            <input type="text" id="username" placeholder="Pilih desa dulu..." readonly>
+        </div>
+        <div class="form-group">
+            <label>🔑 PASSWORD (ENCRYPTED):</label>
+            <input type="password" id="password" placeholder="Pilih desa dulu..." readonly>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>💉 JENIS ALOKON:</label>
+        <select id="jenis_kb">
+            <option value="">- Pilih Jenis Alokon -</option>
+            <option value="Pembinaan Pil Kombinasi">Pembinaan Pil Kombinasi</option>
+            <option value="AB Pil Kombinasi">AB Pil Kombinasi</option>
+            <option value="Pembinaan Suntikan 3 Bulanan Progestin">Pembinaan Suntikan 3 Bulanan Progestin</option>
+            <option value="AB Suntikan 3 Bulanan Progestin">AB Suntikan 3 Bulanan Progestin</option>
+            <option value="AB Implant 1 Batang">AB Implant 1 Batang</option>
+            <option value="AC Implant 1 Batang">AC Implant 1 Batang</option>
+            <option value="AB Implant 2 Batang">AB Implant 2 Batang</option>
+            <option value="AC Implant 2 Batang">AC Implant 2 Batang</option>
+            <option value="AB IUD">AB IUD</option>
+            <option value="AC IUD">AC IUD</option>
+            <option value="AB Kondom">AB Kondom</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>🏥 FASKES:</label>
+        <select id="faskes">
+            <option value="Faskes 1">Faskes 1</option>
+            <option value="Faskes 2">Faskes 2</option>
+            <option value="Faskes 3">Faskes 3</option>
+            <option value="Faskes 4">Faskes 4</option>
+            <option value="Faskes 5">Faskes 5</option>
+        </select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+            <label>🔢 BARIS AWAL:</label>
+            <input type="number" id="awal" value="0">
+        </div>
+        <div class="form-group">
+            <label>🔢 BARIS AKHIR:</label>
+            <input type="number" id="akhir" value="100">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>📅 TANGGAL PELAYANAN:</label>
+        <input type="date" id="tgl_layanan">
+    </div>
+
+    <button class="btn-start" onclick="kirimData()">⚡ EXECUTE ROBOT</button>
+    
+    <a href="/" class="back-link"> [ KEMBALI KE COMMAND CENTER ] </a>
+</div>
+
+<script>
+    // Database Credential Sama dengan script Python Bapak
+    const desaData = {
+        "Bojongraharja": {"user": "opbojongraharja.0210", "pass": "Cikembar@0210"},
+        "Cimanggu": {"user": "opcimanggu.0210", "pass": "Cikembar@0210"},
+        "Bojong": {"user": "opbojong.0210", "pass": "Cikembar@0210"},
+        "Sukamulya": {"user": "opsukamulya.0210", "pass": "Cikembar@0210"},
+        "Sukamaju": {"user": "opsukamaju.0210", "pass": "Cikembar@0210"},
+        "Kertaraharja": {"user": "opkertaraharja.0210", "pass": "Cikembar@0210"},
+        "Parakanlima": {"user": "opparakanlima.0210", "pass": "Cikembar@0210"},
+        "Cikembar": {"user": "opcikembar.0210", "pass": "Cikembar@0210"},
+        "Cibatu": {"user": "opcibatu.0210", "pass": "Cikembar@0210"},
+        "Bojongkembar": {"user": "opbojongkembar.0210", "pass": "Cikembar@0210"}
+    };
+
+    function updateAuth() {
+        const selectedDesa = document.getElementById('desa').value;
+        const userInp = document.getElementById('username');
+        const passInp = document.getElementById('password');
+
+        if (desaData[selectedDesa]) {
+            userInp.value = desaData[selectedDesa].user;
+            passInp.value = desaData[selectedDesa].pass;
+        } else {
+            userInp.value = "";
+            passInp.value = "";
+        }
+    }
+
+    function kirimData() {
+        const payload = {
+            desa: document.getElementById('desa').value,
+            username: document.getElementById('username').value,
+            jenis_kb: document.getElementById('jenis_kb').value,
+            awal: document.getElementById('awal').value,
+            akhir: document.getElementById('akhir').value,
+            tgl: document.getElementById('tgl_layanan').value
+        };
+        
+        if(!payload.desa || !payload.jenis_kb) {
+            alert("⚠️ Lengkapi Desa dan Jenis Alokon!");
+            return;
+        }
+        
+        alert("🚀 Mengirim Perintah ke Robot SIKEPAL...");
+        // Fetch ke backend Python Bapak
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SIKEPAL V.ULTRA - BKB SYNC</title>
+    <style>
+        :root { --amber: #ffbf00; --cyan: #00f0ff; --dark: #020205; }
+        body {
+            background: var(--dark); color: white; font-family: 'Consolas', monospace;
+            margin: 0; padding: 20px;
+            background-image: linear-gradient(rgba(255, 191, 0, 0.05) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255, 191, 0, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .config-panel {
+            max-width: 600px; margin: 0 auto;
+            background: rgba(5, 5, 10, 0.95);
+            border: 1px solid var(--amber); border-top: 4px solid var(--amber);
+            padding: 25px; box-shadow: 0 0 30px rgba(255, 191, 0, 0.2);
+        }
+        .title { color: var(--amber); font-size: 18px; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        
+        label { display: block; margin-top: 12px; color: var(--cyan); font-size: 12px; font-weight: bold; }
+        
+        select, input {
+            width: 100%; padding: 10px; margin-top: 5px;
+            background: rgba(6, 6, 6, 0.363); border: 1px solid #444;
+            color: rgba(244, 248, 244, 0.995); font-family: 'Consolas', monospace; box-sizing: border-box;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn-launch {
+            width: 100%; padding: 15px; margin-top: 25px;
+            background: transparent; border: 2px solid var(--amber);
+            color: var(--amber); font-weight: bold; font-size: 16px;
+            cursor: pointer; text-transform: uppercase;
+        }
+        .btn-launch:hover { background: var(--amber); color: black; box-shadow: 0 0 20px var(--amber); }
+
+        .status-box {
+            margin-top: 20px; padding: 10px; border: 1px solid #333;
+            font-size: 11px; color: #0f0; background: #000; min-height: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="config-panel">
+        <div class="title">🤱 BKB AUTO-ENTRY SYNC (BY DEHEDE_BIMZ)</div>
+        
+        <div class="grid-2">
+            <div>
+                <label>📡 PILIH DESA:</label>
+                <select id="desa">
+                    {% for d in desas %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>📅 TANGGAL KEGIATAN:</label>
+                <input type="date" id="tgl_kegiatan">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <label>🏫 NOMOR URUT BKB:</label>
+                <select id="nama_bkb">
+                    {% for i in range(0, 31) %}<option value="BKB {{ i }}">BKB Urutan {{ i }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>👥 JUMLAH PESERTA:</label>
+                <input type="number" id="jumlah_hadir" value="1" min="1">
+            </div>
+        </div>
+
+        <div class="status-box" id="log-status">
+            STATUS: Ready to launch...
+        </div>
+
+        <button class="btn-launch" onclick="startRobot()">🚀 JALANKAN ROBOT (SYNC MODE)</button>
+        
+        <a href="/" style="display:block; text-align:center; margin-top:15px; color:#666; text-decoration:none; font-size:11px;">← KEMBALI</a>
+    </div>
+
+    <script>
+        // Set default tanggal hari ini
+        document.getElementById('tgl_kegiatan').value = new Date().toISOString().substring(0, 10);
+
+        function startRobot() {
+            const btn = document.querySelector('.btn-launch');
+            const log = document.getElementById('log-status');
+            
+            btn.disabled = true;
+            btn.innerText = "ROBOT SEDANG BEKERJA...";
+            log.innerText = "STATUS: Menginisialisasi Playwright...";
+
+            const payload = {
+                desa: document.getElementById('desa').value,
+                tgl: document.getElementById('tgl_kegiatan').value,
+                nama_bkb: document.getElementById('nama_bkb').value,
+                jumlah: document.getElementById('jumlah_hadir').value
+            };
+
+            fetch('/run_bkb_robot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                btn.disabled = false;
+                btn.innerText = "🚀 JALANKAN ROBOT (SYNC MODE)";
+                log.innerText = "STATUS: Selesai!";
+            });
+        }
+    </script>
+</body>
+</html>

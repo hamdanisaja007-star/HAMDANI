@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SIKEPAL - DASHBOARD</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
+        .card { background: #222; border-left: 5px solid #00ff41; padding: 20px; margin-bottom: 20px; }
+        select, button { padding: 10px; margin-top: 10px; }
+        #status { color: #00ff41; font-weight: bold; margin-top: 20px; border: 1px dashed #00ff41; padding: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>Pusat Kendali SIKEPAL</h1>
+    <div class="card">
+        <h3>Sinkronisasi Robot Pelayanan KB</h3>
+        <label>Pilih Desa:</label><br>
+        <select id="desa">
+            {% for d in desa %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+        </select><br><br>
+        <label>Jenis Alokon:</label><br>
+        <select id="kb_type">
+            <option>AB Pil Kombinasi</option>
+            <option>AB Suntikan 3 Bulanan Progestin</option>
+            <option>AB Implant 1 Batang</option>
+        </select><br><br>
+        <button onclick="runRobot()">SINKRONKAN KE SIGA SEKARANG</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        function runRobot() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = "Memulai Robot... Menghubungkan ke SIGA BKKBN...";
+            
+            fetch('/start_robot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    desa: document.getElementById('desa').value,
+                    kb_type: document.getElementById('kb_type').value
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                statusDiv.innerHTML = "STATUS: " + data.message;
+            });
+        }
+    </script>
+</body>
+</html>
