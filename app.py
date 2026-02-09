@@ -2,7 +2,7 @@ from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-# KODE UTUH: LOGIN, VIDEO, & BANNER SUDAH FIX
+# SEMUA SUDAH JADI SATU (LOGIN & DASHBOARD)
 HTML_FULL = """
 <!DOCTYPE html>
 <html lang="id">
@@ -11,8 +11,8 @@ HTML_FULL = """
     <title>SIKEPAL V.ULTRA - COMMAND CENTER</title>
     <style>
         :root { --cyan: #00f0ff; --pink: #ff00ff; --dark: #020205; --green: #0f0; }
-        body {
-            background: var(--dark); color: white; font-family: 'Consolas', monospace;
+        body { 
+            background: var(--dark); color: white; font-family: 'Consolas', monospace; 
             margin: 0; padding: 20px; overflow-x: hidden;
             background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
             background-size: 30px 30px;
@@ -25,47 +25,54 @@ HTML_FULL = """
         @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
         .main-grid { display: grid; grid-template-columns: 1fr 320px 1fr; gap: 20px; }
         .panel { background: rgba(5, 5, 10, 0.95); border: 1px solid #333; border-top: 4px solid var(--cyan); padding: 20px; position: relative; }
-        .panel-title { color: var(--cyan); font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
-        .visual-box { width: 100%; height: 130px; margin-bottom: 15px; border: 1px solid #444; overflow: hidden; position: relative; background: #000; }
+        .panel-title { color: var(--cyan); font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
+        .visual-box { width: 100%; height: 140px; margin-bottom: 15px; border: 1px solid #444; overflow: hidden; position: relative; background: #000; }
         .visual-box img, .visual-box video { width: 100%; height: 100%; object-fit: cover; }
         .ads-label { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); color: var(--cyan); font-size: 10px; text-align: center; padding: 5px 0; border-top: 1px solid var(--cyan); }
-        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--cyan); color: white; font-weight: bold; cursor: pointer; text-align: left; transition: 0.3s; font-size: 12px; }
-        .btn-cyber:hover { background: var(--cyan); color: black; box-shadow: 0 0 20px var(--cyan); }
-        .lock-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .lock-box { width: 320px; padding: 30px; border: 2px solid var(--cyan); background: #05050a; text-align: center; }
+        .btn-cyber { display: block; width: 100%; padding: 12px; margin-bottom: 8px; background: rgba(0, 240, 255, 0.05); border: 1px solid var(--cyan); color: white; font-weight: bold; cursor: pointer; text-align: left; transition: 0.3s; font-size: 12px; text-decoration: none; box-sizing: border-box; }
+        .btn-cyber:hover { background: var(--cyan); color: black; box-shadow: 0 0 20px var(--cyan); transform: scale(1.02); }
+        
+        /* LOGIN OVERLAY */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .login-box { border: 2px solid var(--cyan); padding: 40px; text-align: center; background: #05050a; box-shadow: 0 0 30px var(--cyan); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>SIKEPAL V.ULTRA</h1>
-        <div style="font-size: 12px; color: var(--pink);">OFFICIAL LICENSE: DHEDE_BIMZ & RAHMAN (2024-2026)</div>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="color:var(--cyan); letter-spacing:5px;">SIKEPAL LOGIN</h2>
+            <input type="password" id="pass" style="background:#111; border:1px solid var(--cyan); color:var(--cyan); padding:10px; text-align:center; width:200px; margin-bottom:20px;" placeholder="ACCESS KEY">
+            <br>
+            <button class="btn-cyber" style="text-align:center" onclick="checkLogin()">AUTHORIZE SYSTEM</button>
+        </div>
     </div>
 
-    <div class="hud-bar">
-        <div id="clock">TIME: 00:00:00</div>
-        <div style="color: #0f0;">● SYSTEM ONLINE</div>
-    </div>
-
-    <div class="ticker-wrap"><div class="ticker">SIKEPAL COMMAND CENTER ONLINE... BROADCASTING FROM STATION CIKEMBAR...</div></div>
+    <div class="header"><h1>SIKEPAL V.ULTRA</h1></div>
+    <div class="hud-bar"><div id="clock">TIME: 00:00:00</div><div>STATION: CIKEMBAR_CORE_0210</div><div style="color: #0f0;">● SYSTEM ONLINE</div></div>
+    <div class="ticker-wrap"><div class="ticker">SIKEPAL SYSTEM READY... MONITORING ACTIVE... STATION CIKEMBAR ONLINE...</div></div>
 
     <div class="main-grid">
         <div class="panel">
             <div class="panel-title">📂 MODULE SIGA</div>
             <div class="visual-box">
-                <img src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/banner1.jpg" onerror="this.src='https://via.placeholder.com/300x150/000000/00f0ff?text=BANNER+1+MISSING'">
-                <div class="ads-label">DASHBOARD MODULE ACTIVE</div>
+                <img src="https://github.com/hamdanisaja007-star/HAMDANI/raw/main/iklan1.jpg">
+                <div class="ads-label">SIGA MODULE ACTIVE</div>
             </div>
-            <button class="btn-cyber" onclick="showLock()">🔓 OPEN SIGA MODULES</button>
-            <div id="siga-unlocked" style="display:none; margin-top:10px;">
-                <button class="btn-cyber" onclick="window.open('https://newsiga-siga.bkkbn.go.id')">🏥 PELAYANAN KB</button>
+            <div id="siga-locked">
+                <button class="btn-cyber" style="text-align:center" onclick="unlockSiga()">🔓 OPEN SIGA FOLDER</button>
+            </div>
+            <div id="siga-content" style="display:none">
+                <a href="https://newsiga-siga.bkkbn.go.id" target="_blank" class="btn-cyber">🏥 PELAYANAN KB</a>
+                <a href="#" class="btn-cyber">👤 DATA PPKBD</a>
             </div>
         </div>
 
         <div class="panel">
             <div class="panel-title">📺 MEDIA MONITOR</div>
-            <div class="visual-box" style="height: 160px; border-color: var(--pink);">
+            <div class="visual-box" style="height: 180px; border-color: var(--pink);">
                 <video autoplay muted loop playsinline>
-                    <source src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/iklan_bkkbn.mp4" type="video/mp4">
+                    <source src="https://github.com/hamdanisaja007-star/HAMDANI/raw/main/iklan_bkkbn.mp4" type="video/mp4">
                 </video>
             </div>
             <button class="btn-cyber" style="border-color:var(--pink); color:var(--pink);" onclick="window.open('https://youtube.com/@bimz82official50')">▶ BIMZ82 OFFICIAL</button>
@@ -74,30 +81,30 @@ HTML_FULL = """
         <div class="panel">
             <div class="panel-title">🌐 EXTERNAL HUB</div>
             <div class="visual-box">
-                <img src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/banner2.jpg" onerror="this.src='https://via.placeholder.com/300x150/000000/00f0ff?text=BANNER+2+MISSING'">
+                <img src="https://github.com/hamdanisaja007-star/HAMDANI/raw/main/iklan2.jpg">
                 <div class="ads-label">PARTNER NETWORK</div>
             </div>
-            <button class="btn-cyber" onclick="window.open('https://kinerja.bkn.go.id')">🔗 E-KINERJA</button>
-            <button class="btn-cyber" onclick="window.open('https://evisum4.bkkbn.go.id')">🔗 E-VISUM</button>
-        </div>
-    </div>
-
-    <div class="lock-overlay" id="lock-screen">
-        <div class="lock-box">
-            <div style="color:var(--cyan); margin-bottom:15px;">🔐 ENTER ACCESS KEY</div>
-            <input type="password" id="key" style="width:100%; padding:10px; margin-bottom:15px; background:#111; border:1px solid var(--cyan); color:var(--cyan); text-align:center;">
-            <button class="btn-cyber" style="text-align:center;" onclick="unlock()">UNLOCK</button>
+            <a href="https://kinerja.bkn.go.id" target="_blank" class="btn-cyber">🔗 E-KINERJA</a>
+            <a href="https://evisum4.bkkbn.go.id" target="_blank" class="btn-cyber">🔗 E-VISUM</a>
         </div>
     </div>
 
     <script>
-        setInterval(() => { document.getElementById('clock').innerText = "TIME: " + new Date().toLocaleTimeString(); }, 1000);
-        function showLock() { document.getElementById('lock-screen').style.display = 'flex'; }
-        function unlock() {
-            if(document.getElementById('key').value === 'BIMZ2026') {
-                document.getElementById('lock-screen').style.display = 'none';
-                document.getElementById('siga-unlocked').style.display = 'block';
-            } else { alert('DENIED!'); }
+        function updateClock() { document.getElementById('clock').innerText = "TIME: " + new Date().toLocaleTimeString(); }
+        setInterval(updateClock, 1000);
+
+        function checkLogin() {
+            if(document.getElementById('pass').value === 'BIMZ2026') {
+                document.getElementById('login-overlay').style.display = 'none';
+            } else { alert('ACCESS DENIED'); }
+        }
+
+        function unlockSiga() {
+            let p = prompt("Enter Siga Key:");
+            if(p === 'BIMZ2026') {
+                document.getElementById('siga-locked').style.display = 'none';
+                document.getElementById('siga-content').style.display = 'block';
+            }
         }
     </script>
 </body>
