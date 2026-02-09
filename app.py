@@ -1,23 +1,133 @@
-from flask import Flask, render_template, request, jsonify
-import os
+from flask import Flask, render_template_string
 
-# Kode ini akan otomatis nyari alamat folder yang benar
-base_dir = os.path.dirname(os.path.abspath(__file__))
-template_dir = os.path.join(base_dir, 'templates')
+app = Flask(__name__)
 
-app = Flask(__name__, template_folder=template_dir)
+# KODE DESAIN SIKEPAL BAPAK SAYA MASUKKAN DI SINI
+login_html = """
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SIKEPAL V.ULTRA - ACCESS POINT</title>
+    <style>
+        :root { --cyan: #00f0ff; --pink: #ff00ff; --dark: #020205; }
+        body, html {
+            margin: 0; padding: 0; height: 100%; overflow: hidden;
+            background: black; font-family: 'Consolas', monospace;
+        }
+        #bg-video {
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            z-index: -2; filter: brightness(0.4) contrast(1.2);
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 20%, var(--dark) 80%);
+            z-index: -1; pointer-events: none;
+        }
+        .login-container {
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; gap: 40px;
+        }
+        .info-panel {
+            width: 300px; padding: 20px;
+            background: rgba(0,0,0,0.8); border: 1px solid var(--pink);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+            text-align: center; clip-path: polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%);
+        }
+        .ads-box {
+            width: 100%; height: 200px; border: 1px solid #333; margin: 15px 0;
+            overflow: hidden; background: #000;
+        }
+        .ads-box img { width: 100%; height: 100%; object-fit: cover; }
+        .login-box {
+            width: 380px; padding: 40px;
+            background: rgba(5, 5, 10, 0.9); border-top: 4px solid var(--cyan);
+            border-left: 1px solid var(--cyan); border-right: 1px solid var(--cyan);
+            border-bottom: 1px solid var(--cyan);
+            box-shadow: 0 0 30px var(--cyan); text-align: center;
+        }
+        .login-box h2 { 
+            color: var(--cyan); letter-spacing: 5px; margin: 0; 
+            font-family: 'Impact'; font-size: 35px; text-shadow: 0 0 10px var(--cyan);
+        }
+        .input-group { margin: 30px 0; }
+        .input-group input {
+            width: 100%; padding: 15px; background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--cyan); color: var(--cyan);
+            font-size: 20px; text-align: center; outline: none;
+            box-sizing: border-box; transition: 0.3s;
+        }
+        .btn-login {
+            width: 100%; padding: 15px; background: var(--cyan); border: none;
+            color: black; font-weight: bold; cursor: pointer; font-size: 16px;
+            transition: 0.3s; text-transform: uppercase;
+        }
+        .footer-tag { position: absolute; bottom: 20px; color: #555; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/static/iklan_bkkbn.mp4" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+    <div class="login-container">
+        <div class="info-panel">
+            <div style="color: var(--pink); font-size: 12px; font-weight: bold;">[ SYSTEM ANNOUNCEMENT ]</div>
+            <div class="ads-box">
+                <img id="login-ads" src="https://via.placeholder.com/300x200/000000/00f0ff?text=LOADING+ADS...">
+            </div>
+            <div id="ads-text" style="color: white; font-size: 11px;">Initializing Link...</div>
+        </div>
+        <div class="login-box">
+            <h2>SIKEPAL<br><span style="font-size: 16px; letter-spacing: 2px;">V.ULTRA ACCESS</span></h2>
+            <div class="input-group">
+                <input type="password" id="pass" placeholder="ENTER ACCESS KEY" autocomplete="off">
+            </div>
+            <button class="btn-login" onclick="checkAuth()">INITIALIZE ACCESS</button>
+            <div id="msg" style="margin-top: 15px; font-size: 12px; color: #444;">AWAITING COMMAND...</div>
+        </div>
+    </div>
+    <div class="footer-tag">DEDE BIMZ & RAHMAN © 2026 | STATION: CIKEMBAR_CORE_0210</div>
+    <script>
+        function checkAuth() {
+            const pass = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            if (pass === "BIMZ2026") {
+                msg.style.color = "#0f0";
+                msg.innerText = "ACCESS GRANTED. SYNCING DATA...";
+                setTimeout(() => { window.location.href = "/dashboard"; }, 1500);
+            } else {
+                msg.style.color = "#f00";
+                msg.innerText = "INVALID ACCESS KEY!";
+                document.getElementById('pass').value = '';
+            }
+        }
+        async function fetchAds() {
+            try {
+                const response = await fetch("https://raw.githubusercontent.com/hamdanisaja007-star/HAMDANI/main/iklan.json");
+                const data = await response.json();
+                if (data.iklan_aktif && data.iklan_aktif.length > 0) {
+                    const randomAd = data.iklan_aktif[Math.floor(Math.random() * data.iklan_aktif.length)];
+                    document.getElementById('login-ads').src = randomAd.img;
+                    document.getElementById('ads-text').innerText = randomAd.text;
+                }
+            } catch (e) { console.log("Ads Sync Failed"); }
+        }
+        fetchAds();
+    </script>
+</body>
+</html>
+"""
 
 @app.route('/')
-def login_page():
-    return render_template('login.html')
+def home():
+    return render_template_string(login_html)
 
 @app.route('/dashboard')
-def dashboard_page():
-    return render_template('index.html')
-
-@app.route('/handler', methods=['POST'])
-def handler():
-    return jsonify({"status": "success"})
+def dashboard():
+    # Nanti kita isi ini dengan file index.html Bapak
+    return "<h1>DASHBOARD SIKEPAL AKTIF</h1><p>Selamat Datang, Komandan.</p>"
 
 if __name__ == '__main__':
     app.run()
