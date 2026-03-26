@@ -1,3 +1,5 @@
 flask
-requests
-werkzeug==2.2.2
+flask_sqlalchemy
+pandas
+gunicorn
+openpyxl
