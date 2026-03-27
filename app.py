@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = "dhede_bimz_final_full_2026_secure"
@@ -10,7 +11,15 @@ app.secret_key = "dhede_bimz_final_full_2026_secure"
 # --- KONFIGURASI DATABASE & FOLDER ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/kepegawaian.db'
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
+app.config['CHAT_UPLOAD'] = '/tmp/chat_files'  # Folder lampiran chat
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Pastikan folder chat tersedia
+os.makedirs(app.config['CHAT_UPLOAD'], exist_ok=True)
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
 
@@ -31,6 +40,7 @@ class Pegawai(db.Model):
 class Pengumuman(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     isi = db.Column(db.Text, nullable=False)
+    file_lampiran = db.Column(db.String(200), nullable=True) # Kolom lampiran
     admin_name = db.Column(db.String(50), default="Admin Kabupaten")
     tanggal = db.Column(db.DateTime, default=datetime.now)
 
@@ -60,7 +70,7 @@ def auth():
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD (Statistik & Info Terkini) ---
+# --- DASHBOARD (Statistik) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -68,8 +78,8 @@ def dashboard():
     today = date.today()
     pegawai_list = Pegawai.query.all()
     
-    # Ambil 5 pengumuman terbaru
-    info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(5).all()
+    # Dashboard hanya ambil pengumuman sekilas (opsional)
+    info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
     notif_pangkat = []
     notif_pensiun = []
@@ -89,17 +99,39 @@ def dashboard():
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
                            info_terkini=info_list)
 
-# --- FITUR KIRIM PENGUMUMAN (Khusus Admin) ---
+# --- HALAMAN CHAT / INFO (Pecah Fungsi) ---
+@app.route('/chat_info')
+def chat_info():
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    role = session['user_role']
+    info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
+    user_data = None
+    if role == 'plkb':
+        user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
+    return render_template('chat_info.html', role=role, user_data=user_data, info_terkini=info_list, today=date.today())
+
 @app.route('/kirim_pengumuman', methods=['POST'])
 def kirim_pengumuman():
     if session.get('user_role') == 'admin':
         pesan = request.form.get('isi_pengumuman')
+        file = request.files.get('lampiran')
+        filename = None
+        
+        if file and allowed_file(file.filename):
+            orig_filename = secure_filename(file.filename)
+            filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{orig_filename}"
+            file.save(os.path.join(app.config['CHAT_UPLOAD'], filename))
+
         if pesan:
-            baru = Pengumuman(isi=pesan)
+            baru = Pengumuman(isi=pesan, file_lampiran=filename)
             db.session.add(baru)
             db.session.commit()
-            flash("Informasi berhasil disiarkan!", "success")
-    return redirect(url_for('dashboard'))
+            flash("Informasi & Lampiran berhasil disiarkan!", "success")
+    return redirect(url_for('chat_info'))
+
+@app.route('/download_chat/<filename>')
+def download_chat(filename):
+    return send_from_directory(app.config['CHAT_UPLOAD'], filename)
 
 # --- DATA PEGAWAI (Tabel & Input) ---
 @app.route('/data_pegawai')
