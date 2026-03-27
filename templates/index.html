@@ -14,6 +14,9 @@
         .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 8px; }
         .stat-card { border-radius: 15px; border: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        /* Style Tambahan untuk Bubble Chat */
+        .bubble-info { background: #e3f2fd; border-radius: 15px 15px 15px 0; padding: 12px 15px; margin-bottom: 10px; border-left: 5px solid #00d2ff; }
+        .info-container { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-height: 400px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -29,6 +32,7 @@
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-home me-2"></i> Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-comments me-2"></i> Chat/Info <span class="badge bg-danger rounded-pill">Baru</span></a></li>
                 {% if role == 'admin' %}
                 <li class="nav-item"><a class="nav-link" href="/export_excel"><i class="fas fa-file-excel me-2"></i> Export Excel</a></li>
                 {% endif %}
@@ -37,6 +41,17 @@
         </div>
 
         <div class="col-md-10 p-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h3 class="fw-bold text-dark">Ringkasan Sidalap</h3>
@@ -71,23 +86,91 @@
                         </div>
                     </div>
                 </div>
+                {% else %}
+                <div class="col-md-8 mb-3">
+                    <div class="card stat-card bg-dark text-white p-4">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary text-white p-3 rounded-circle me-3"><i class="fas fa-user-check fa-2x"></i></div>
+                            <div>
+                                <h6 class="text-info mb-0 small">LOGIN SEBAGAI:</h6>
+                                <h4 class="fw-bold mb-0">{{ user_data.nama if user_data else 'PLKB KAB. SUKABUMI' }}</h4>
+                                <p class="mb-0 small text-secondary">Wilayah: {{ user_data.kecamatan if user_data else '-' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
             </div>
 
-            <div class="card border-0 shadow-sm p-4 bg-info text-white rounded-4">
-                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Selamat Datang, {{ role.upper() }}!</h5>
-                <p class="mb-0 small">Gunakan menu di samping untuk mengelola data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card border-0 shadow-sm p-4 bg-info text-white rounded-4 mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="fw-bold mb-1"><i class="fas fa-bullhorn me-2"></i>Informasi Pusat IPeKB</h5>
+                                <p class="mb-0 small">Pastikan Anda selalu memantau instruksi terbaru di bawah ini.</p>
+                            </div>
+                            {% if role == 'admin' %}
+                            <button class="btn btn-light btn-sm fw-bold text-info shadow-sm" data-bs-toggle="modal" data-bs-target="#modalInfo">
+                                <i class="fas fa-paper-plane me-1"></i> KIRIM INFO
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-container p-4 shadow-sm border">
+                        <h6 class="fw-bold mb-3 text-muted border-bottom pb-2">PENGUMUMAN TERBARU</h6>
+                        {% if info_terkini %}
+                            {% for info in info_terkini %}
+                            <div class="bubble-info shadow-sm">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="badge bg-info text-dark">{{ info.admin_name }}</span>
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ info.tanggal.strftime('%d/%m/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0 text-dark" style="font-size: 0.95rem;">{{ info.isi }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-envelope-open text-muted fa-3x mb-3"></i>
+                                <p class="text-muted">Belum ada pengumuman masuk hari ini.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="modalInfo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="/kirim_pengumuman" method="POST" class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">SIARKAN INFORMASI</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Isi Pesan/Instruksi</label>
+                    <textarea name="isi_pengumuman" class="form-control" rows="4" placeholder="Contoh: Jadwal rapat koordinasi hari Senin jam 09.00 di Balai..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="submit" class="btn btn-info px-5 text-white fw-bold shadow w-100">SIARKAN SEKARANG</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function startTime() {
         const today = new Date();
         let h = today.getHours(); let m = today.getMinutes(); let s = today.getSeconds();
         m = checkTime(m); s = checkTime(s);
-        document.getElementById('clock').innerHTML = '<i class="far fa-clock me-2"></i>' + h + ":" + m + ":" + s;
+        document.getElementById('clock').innerHTML = '<i class="far fa-clock me-2"></i>' + h + ":" + m + ":" + s + " WIB";
         setTimeout(startTime, 1000);
     }
     function checkTime(i) { if (i < 10) {i = "0" + i}; return i; }
