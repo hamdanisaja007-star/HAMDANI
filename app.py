@@ -28,31 +28,15 @@ class Pegawai(db.Model):
     tmt_pangkat = db.Column(db.Date, nullable=True)
     tgl_lahir = db.Column(db.Date, nullable=True)
 
+class Pengumuman(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    isi = db.Column(db.Text, nullable=False)
+    admin_name = db.Column(db.String(50), default="Admin Kabupaten")
+    tanggal = db.Column(db.DateTime, default=datetime.now)
+
 class BankSoal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pertanyaan = db.Column(db.Text, nullable=False)
-
-class Pesan(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nama_pengirim = db.Column(db.String(100))
-    nip_pengirim = db.Column(db.String(20))
-    isi_pesan = db.Column(db.Text, nullable=False)
-    tanggal = db.Column(db.DateTime, default=datetime.now)
-
-# --- FUNGSI OTOMATISASI FOLDER ---
-def buat_folder_pegawai(pegawai_obj):
-    folder_aman = pegawai_obj.nama.replace(" ", "_")
-    status = pegawai_obj.jenis_pegawai 
-    kategori_wajib = ['Berkas_Umum']
-    if status == 'PNS':
-        kategori_spesifik = ['Kenaikan_Pangkat', 'Kenaikan_Jabatan', 'Pensiun']
-    else:
-        kategori_spesifik = ['Perpanjangan_Kontrak', 'Kenaikan_Golongan']
-    
-    for kat in kategori_wajib + kategori_spesifik:
-        path = os.path.join(app.config['UPLOAD_FOLDER'], status, folder_aman, kat)
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
 
 # --- ROUTES ---
 
@@ -76,14 +60,16 @@ def auth():
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
-# --- HALAMAN 1: DASHBOARD (Khusus Statistik & Notif) ---
+# --- DASHBOARD (Statistik & Info Terkini) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
     pegawai_list = Pegawai.query.all()
-    pesan_list = Pesan.query.order_by(Pesan.tanggal.desc()).all()
+    
+    # Ambil 5 pengumuman terbaru
+    info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(5).all()
     
     notif_pangkat = []
     notif_pensiun = []
@@ -101,9 +87,21 @@ def dashboard():
     return render_template('index.html', role=role, user_data=user_data, 
                            pegawai=pegawai_list, today=today,
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
-                           pesan_masuk=pesan_list)
+                           info_terkini=info_list)
 
-# --- HALAMAN 2: DATA PEGAWAI (Khusus Tabel & Input) ---
+# --- FITUR KIRIM PENGUMUMAN (Khusus Admin) ---
+@app.route('/kirim_pengumuman', methods=['POST'])
+def kirim_pengumuman():
+    if session.get('user_role') == 'admin':
+        pesan = request.form.get('isi_pengumuman')
+        if pesan:
+            baru = Pengumuman(isi=pesan)
+            db.session.add(baru)
+            db.session.commit()
+            flash("Informasi berhasil disiarkan!", "success")
+    return redirect(url_for('dashboard'))
+
+# --- DATA PEGAWAI (Tabel & Input) ---
 @app.route('/data_pegawai')
 def data_pegawai():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -134,7 +132,7 @@ def tambah_pegawai():
     except Exception as e:
         db.session.rollback()
         flash(f"Gagal Simpan: {str(e)}", "danger")
-    return redirect(url_for('data_pegawai')) # Balik ke halaman data
+    return redirect(url_for('data_pegawai'))
 
 @app.route('/hapus_pegawai/<int:id>')
 def hapus_pegawai(id):
