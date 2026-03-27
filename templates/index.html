@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DASHBOARD | SIDALAP DHEDE_BIMZ</title>
+    <title>DASHBOARD | SIDALAP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -14,9 +14,6 @@
         .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 8px; }
         .stat-card { border-radius: 15px; border: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .badge-pns { background-color: var(--primary-blue); color: #000; font-weight: bold; }
-        .notif-badge { position: absolute; top: -5px; right: -5px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -27,12 +24,11 @@
             <div class="text-center mb-4">
                 <i class="fas fa-robot fa-3x text-info mb-2"></i>
                 <h5 class="fw-bold text-info">SIDALAP</h5>
-                <p class="small text-muted">IPeKB Kab. Sukabumi</p>
                 <hr class="bg-light">
             </div>
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-home me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
+                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
                 {% if role == 'admin' %}
                 <li class="nav-item"><a class="nav-link" href="/export_excel"><i class="fas fa-file-excel me-2"></i> Export Excel</a></li>
                 {% endif %}
@@ -43,45 +39,34 @@
         <div class="col-md-10 p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 class="fw-bold">Halo, {{ user_data.nama if role == 'plkb' else 'Admin Kabupaten' }}!</h3>
-                    <p class="text-muted small">Hari ini: {{ today.strftime('%d %B %Y') }}</p>
+                    <h3 class="fw-bold text-dark">Ringkasan Sidalap</h3>
+                    <p class="text-muted small">Update: {{ today.strftime('%d %B %Y') }}</p>
                 </div>
                 <div id="clock" class="h4 fw-bold text-info border p-2 rounded shadow-sm bg-white"></div>
             </div>
 
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
-
             <div class="row mb-4">
                 <div class="col-md-4 mb-3">
-                    <div class="card stat-card bg-white p-3 border-start border-info border-5">
+                    <div class="card stat-card bg-white p-4 border-start border-info border-5">
                         <div class="d-flex align-items-center">
-                            <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-user-tie fa-2x"></i></div>
+                            <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
                             <div><h6 class="text-muted mb-0">Total Pegawai</h6><h3 class="fw-bold mb-0">{{ pegawai|length }}</h3></div>
                         </div>
                     </div>
                 </div>
                 {% if role == 'admin' %}
                 <div class="col-md-4 mb-3">
-                    <div class="card stat-card bg-white p-3 border-start border-warning border-5">
+                    <div class="card stat-card bg-white p-4 border-start border-warning border-5">
                         <div class="d-flex align-items-center">
-                            <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-arrow-up fa-2x"></i></div>
+                            <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-award fa-2x"></i></div>
                             <div><h6 class="text-muted mb-0">Naik Pangkat</h6><h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <div class="card stat-card bg-white p-3 border-start border-danger border-5">
+                    <div class="card stat-card bg-white p-4 border-start border-danger border-5">
                         <div class="d-flex align-items-center">
-                            <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-clock fa-2x"></i></div>
+                            <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-user-clock fa-2x"></i></div>
                             <div><h6 class="text-muted mb-0">Pensiun</h6><h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3></div>
                         </div>
                     </div>
@@ -89,85 +74,14 @@
                 {% endif %}
             </div>
 
-            <div class="table-container">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark"><i class="fas fa-database me-2"></i>Database Lini Lapangan</h5>
-                    {% if role == 'admin' %}
-                    <button class="btn btn-info btn-sm fw-bold text-white shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
-                        <i class="fas fa-plus-circle me-1"></i> TAMBAH DATA
-                    </button>
-                    {% endif %}
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>NIP</th>
-                                <th>NAMA LENGKAP</th>
-                                <th>JABATAN</th>
-                                <th>STATUS</th>
-                                <th>KECAMATAN</th>
-                                <th class="text-center">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in pegawai %}
-                            <tr>
-                                <td class="fw-bold text-primary">{{ p.nip }}</td>
-                                <td class="fw-bold">{{ p.nama }}</td>
-                                <td>{{ p.jabatan }}</td>
-                                <td><span class="badge {{ 'badge-pns' if p.jenis_pegawai == 'PNS' else 'bg-secondary' }}">{{ p.jenis_pegawai }}</span></td>
-                                <td>{{ p.kecamatan }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <button class="btn btn-sm btn-outline-info" title="Lihat Berkas"><i class="fas fa-folder-open"></i></button>
-                                        {% if role == 'admin' %}
-                                        <a href="/hapus_pegawai/{{ p.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin ingin menghapus data?')"><i class="fas fa-trash-alt"></i></a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="6" class="text-center text-muted">Belum ada data pegawai.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="card border-0 shadow-sm p-4 bg-info text-white rounded-4">
+                <h5 class="fw-bold"><i class="fas fa-bullhorn me-2"></i>Selamat Datang, {{ role.upper() }}!</h5>
+                <p class="mb-0 small">Gunakan menu di samping untuk mengelola data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalTambah" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form action="/tambah_pegawai" method="POST" class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2"></i>INPUT DATA PEGAWAI BARU</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold">NIP</label><input type="text" name="nip" class="form-control shadow-sm" placeholder="Contoh: 1982..." required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold">NAMA LENGKAP</label><input type="text" name="nama" class="form-control shadow-sm" required></div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">STATUS</label>
-                        <select name="jenis_pegawai" class="form-select shadow-sm"><option value="PNS">PNS</option><option value="PPPK">PPPK</option></select>
-                    </div>
-                    <div class="col-md-6"><label class="form-label fw-bold">JABATAN</label><input type="text" name="jabatan" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">KECAMATAN</label><input type="text" name="kecamatan" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">TMT PANGKAT</label><input type="date" name="tmt" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold">TGL LAHIR</label><input type="date" name="lahir" class="form-control shadow-sm"></div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-4">
-                <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">BATAL</button>
-                <button type="submit" class="btn btn-info px-5 text-white fw-bold shadow">SIMPAN PERMANEN</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function startTime() {
         const today = new Date();
