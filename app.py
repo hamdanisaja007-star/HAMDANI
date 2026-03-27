@@ -14,7 +14,7 @@ app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
 app.config['CHAT_UPLOAD'] = '/tmp/chat_files'  # Folder lampiran chat
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan folder chat tersedia
+# Pastikan folder tersedia
 os.makedirs(app.config['CHAT_UPLOAD'], exist_ok=True)
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx'}
 
@@ -40,9 +40,16 @@ class Pegawai(db.Model):
 class Pengumuman(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     isi = db.Column(db.Text, nullable=False)
-    file_lampiran = db.Column(db.String(200), nullable=True) # Kolom lampiran
+    file_lampiran = db.Column(db.String(200), nullable=True)
     admin_name = db.Column(db.String(50), default="Admin Kabupaten")
     tanggal = db.Column(db.DateTime, default=datetime.now)
+
+class LogBaca(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pengumuman_id = db.Column(db.Integer, db.ForeignKey('pengumuman.id'), nullable=False)
+    nip_pembaca = db.Column(db.String(20), nullable=False)
+    nama_pembaca = db.Column(db.String(100))
+    waktu_baca = db.Column(db.DateTime, default=datetime.now)
 
 class BankSoal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,7 +85,7 @@ def dashboard():
     today = date.today()
     pegawai_list = Pegawai.query.all()
     
-    # Dashboard hanya ambil pengumuman sekilas (opsional)
+    # Ambil 3 pengumuman terbaru untuk ringkasan
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
     notif_pangkat = []
@@ -99,16 +106,35 @@ def dashboard():
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
                            info_terkini=info_list)
 
-# --- HALAMAN CHAT / INFO (Pecah Fungsi) ---
+# --- HALAMAN CHAT / INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
+    
+    # Logic Otomatis Baca untuk PLKB
+    if role == 'plkb':
+        user = Pegawai.query.filter_by(nip=session['user_nip']).first()
+        if user:
+            for info in info_list:
+                sudah_baca = LogBaca.query.filter_by(pengumuman_id=info.id, nip_pembaca=user.nip).first()
+                if not sudah_baca:
+                    baru = LogBaca(pengumuman_id=info.id, nip_pembaca=user.nip, nama_pembaca=user.nama)
+                    db.session.add(baru)
+            db.session.commit()
+
+    # Data Pembaca untuk Admin
+    read_data = {}
+    if role == 'admin':
+        for info in info_list:
+            read_data[info.id] = LogBaca.query.filter_by(pengumuman_id=info.id).all()
+
     user_data = None
     if role == 'plkb':
         user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
-    return render_template('chat_info.html', role=role, user_data=user_data, info_terkini=info_list, today=date.today())
+        
+    return render_template('chat_info.html', role=role, user_data=user_data, info_terkini=info_list, read_data=read_data, today=date.today())
 
 @app.route('/kirim_pengumuman', methods=['POST'])
 def kirim_pengumuman():
@@ -133,7 +159,7 @@ def kirim_pengumuman():
 def download_chat(filename):
     return send_from_directory(app.config['CHAT_UPLOAD'], filename)
 
-# --- DATA PEGAWAI (Tabel & Input) ---
+# --- DATA PEGAWAI ---
 @app.route('/data_pegawai')
 def data_pegawai():
     if 'user_role' not in session: return redirect(url_for('landing'))
