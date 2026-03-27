@@ -1,0 +1,53 @@
+{% if info_terkini %}
+    {% for info in info_terkini %}
+    <div class="bubble-admin shadow-sm border-start border-info border-5 mb-4" style="background: white; border-radius: 15px; padding: 15px;">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="badge bg-info text-dark fw-bold"><i class="fas fa-user-shield me-1"></i>{{ info.admin_name }}</span>
+            <small class="text-muted">{{ info.tanggal.strftime('%d %b %Y | %H:%M') }}</small>
+        </div>
+        
+        <p class="mb-3 text-dark" style="white-space: pre-wrap;">{{ info.isi }}</p>
+
+        {% if info.file_lampiran %}
+        <div class="attachment-box p-2 rounded border bg-light d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-file-alt fa-2x text-secondary me-3"></i>
+                <div class="overflow-hidden">
+                    <p class="mb-0 small fw-bold text-truncate" style="max-width: 200px;">{{ info.file_lampiran }}</p>
+                    <small class="text-muted">Klik untuk mengunduh</small>
+                </div>
+            </div>
+            <a href="{{ url_for('download_chat', filename=info.file_lampiran) }}" class="btn btn-sm btn-outline-info shadow-sm">
+                <i class="fas fa-download"></i> Unduh
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    {% endif %}
+
+<div class="modal fade" id="modalKirim" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="/kirim_pengumuman" method="POST" enctype="multipart/form-data" class="modal-content border-0">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">POSTING INFORMASI & FILE</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Isi Pengumuman</label>
+                    <textarea name="isi_pengumuman" class="form-control" rows="4" placeholder="Tulis instruksi kerja..." required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-info"><i class="fas fa-paperclip me-1"></i> Lampirkan File (PDF/Foto/Docx)</label>
+                    <input type="file" name="lampiran" class="form-control form-control-sm">
+                    <small class="text-muted" style="font-size: 0.7rem;">Maksimal file: 10MB</small>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="submit" class="btn btn-info w-100 text-white fw-bold shadow">SIARKAN INFORMASI</button>
+            </div>
+        </form>
+    </div>
+</div>
