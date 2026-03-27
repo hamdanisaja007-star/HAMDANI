@@ -14,6 +14,7 @@
         .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 8px; }
         .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .badge-pns { background-color: var(--primary-blue); color: #000; font-weight: bold; }
+        .filter-box { background: #fff; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -49,16 +50,37 @@
             {% endwith %}
 
             <div class="table-container">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark"><i class="fas fa-list me-2"></i>Database Lini Lapangan</h5>
-                    {% if role == 'admin' %}
-                    <button class="btn btn-info btn-sm fw-bold text-white shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
-                        <i class="fas fa-plus-circle me-1"></i> TAMBAH DATA
-                    </button>
-                    {% endif %}
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fas fa-database me-2"></i>Database Lini Lapangan</h5>
+                    
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <select id="filterKecamatan" class="form-select form-select-sm shadow-sm" style="width: 180px;">
+                            <option value="">Semua Kecamatan</option>
+                            <option value="Cisolok">Cisolok</option>
+                            <option value="Cikakak">Cikakak</option>
+                            <option value="Palabuhanratu">Palabuhanratu</option>
+                            <option value="Simpenan">Simpenan</option>
+                            <option value="Cikembar">Cikembar</option>
+                            <option value="Cibadak">Cibadak</option>
+                            <option value="Cisaat">Cisaat</option>
+                            <option value="Sukatani">Sukatani</option>
+                        </select>
+
+                        <div class="input-group input-group-sm shadow-sm" style="width: 250px;">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="inputCari" class="form-control border-start-0" placeholder="Cari Nama atau NIP...">
+                        </div>
+
+                        {% if role == 'admin' %}
+                        <button class="btn btn-info btn-sm fw-bold text-white shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
+                            <i class="fas fa-plus-circle me-1"></i> TAMBAH DATA
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="tabelPegawai">
                         <thead class="table-dark">
                             <tr>
                                 <th>NIP</th>
@@ -76,7 +98,7 @@
                                 <td class="fw-bold">{{ p.nama }}</td>
                                 <td>{{ p.jabatan }}</td>
                                 <td><span class="badge {{ 'badge-pns' if p.jenis_pegawai == 'PNS' else 'bg-secondary' }}">{{ p.jenis_pegawai }}</span></td>
-                                <td>{{ p.kecamatan }}</td>
+                                <td class="col-kecamatan">{{ p.kecamatan }}</td>
                                 <td class="text-center">
                                     <div class="btn-group">
                                         <button class="btn btn-sm btn-outline-info" title="Lihat Berkas"><i class="fas fa-folder-open"></i></button>
@@ -123,5 +145,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const inputCari = document.getElementById('inputCari');
+    const filterKecamatan = document.getElementById('filterKecamatan');
+
+    function jalankanSaring() {
+        const kataKunci = inputCari.value.toLowerCase();
+        const kecTerpilih = filterKecamatan.value.toLowerCase();
+        const rows = document.querySelectorAll('#tabelPegawai tbody tr');
+
+        rows.forEach(row => {
+            // Index 0 = NIP, Index 1 = Nama, Index 4 = Kecamatan
+            const nip = row.cells[0].textContent.toLowerCase();
+            const nama = row.cells[1].textContent.toLowerCase();
+            const kecamatan = row.cells[4].textContent.toLowerCase();
+
+            const cocokCari = nip.includes(kataKunci) || nama.includes(kataKunci);
+            const cocokKecamatan = kecTerpilih === "" || kecamatan.includes(kecTerpilih);
+
+            if (cocokCari && cocokKecamatan) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    inputCari.addEventListener('keyup', jalankanSaring);
+    filterKecamatan.addEventListener('change', jalankanSaring);
+</script>
+
 </body>
 </html>
