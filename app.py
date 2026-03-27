@@ -7,15 +7,14 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = "dhede_bimz_final_full_2026_secure"
 
-# --- KONFIGURASI DATABASE & FOLDER (MODIFIKASI AMAN VERCEL) ---
-# Gunakan /tmp/ agar Vercel bisa menulis database sementara
+# --- KONFIGURASI DATABASE & FOLDER ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/kepegawaian.db'
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- MODELS (Sesuai Rancangan Bos) ---
+# --- MODELS ---
 class Pegawai(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nip = db.Column(db.String(20), unique=True, nullable=False)
@@ -40,11 +39,10 @@ class Pesan(db.Model):
     isi_pesan = db.Column(db.Text, nullable=False)
     tanggal = db.Column(db.DateTime, default=datetime.now)
 
-# --- FUNGSI OTOMATISASI FOLDER (Logika Bos) ---
+# --- FUNGSI OTOMATISASI FOLDER ---
 def buat_folder_pegawai(pegawai_obj):
     folder_aman = pegawai_obj.nama.replace(" ", "_")
     status = pegawai_obj.jenis_pegawai 
-    
     kategori_wajib = ['Berkas_Umum']
     if status == 'PNS':
         kategori_spesifik = ['Kenaikan_Pangkat', 'Kenaikan_Jabatan', 'Pensiun']
@@ -57,6 +55,7 @@ def buat_folder_pegawai(pegawai_obj):
             os.makedirs(path, exist_ok=True)
 
 # --- ROUTES ---
+
 @app.route('/')
 def landing():
     if 'user_role' in session: return redirect(url_for('dashboard'))
@@ -66,20 +65,18 @@ def landing():
 def auth():
     user_in = request.form.get('username')
     pass_in = request.form.get('password')
-    
     if user_in == "admin" and pass_in == "admin123":
         session['user_role'] = 'admin'
         return redirect(url_for('dashboard'))
-    
     user_plkb = Pegawai.query.filter_by(nip=user_in).first()
     if user_plkb:
         session['user_role'] = 'plkb'
         session['user_nip'] = user_in
         return redirect(url_for('dashboard'))
-        
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
+# --- HALAMAN 1: DASHBOARD (Khusus Statistik & Notif) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -88,14 +85,11 @@ def dashboard():
     pegawai_list = Pegawai.query.all()
     pesan_list = Pesan.query.order_by(Pesan.tanggal.desc()).all()
     
-    berkas_masuk = []
-    berkas_saya = []
     notif_pangkat = []
     notif_pensiun = []
     user_data = None
 
     if role == 'admin':
-        # Logika Notifikasi Pangkat & Pensiun
         for p in pegawai_list:
             if p.jenis_pegawai == 'PNS' and p.tmt_pangkat:
                 if (today - p.tmt_pangkat).days >= 1370: notif_pangkat.append(p.nama)
@@ -109,12 +103,24 @@ def dashboard():
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
                            pesan_masuk=pesan_list)
 
+# --- HALAMAN 2: DATA PEGAWAI (Khusus Tabel & Input) ---
+@app.route('/data_pegawai')
+def data_pegawai():
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    role = session['user_role']
+    pegawai_list = Pegawai.query.all()
+    user_data = None
+    if role == 'plkb':
+        user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
+        
+    return render_template('data_pegawai.html', role=role, pegawai=pegawai_list, 
+                           user_data=user_data, today=date.today())
+
 @app.route('/tambah_pegawai', methods=['POST'])
 def tambah_pegawai():
     try:
         tmt = datetime.strptime(request.form.get('tmt'), '%Y-%m-%d').date() if request.form.get('tmt') else None
         lahir = datetime.strptime(request.form.get('lahir'), '%Y-%m-%d').date() if request.form.get('lahir') else None
-        
         baru = Pegawai(
             nip=request.form.get('nip'), nama=request.form.get('nama'), 
             jabatan=request.form.get('jabatan'), jenis_pegawai=request.form.get('jenis_pegawai'),
@@ -124,13 +130,21 @@ def tambah_pegawai():
         )
         db.session.add(baru)
         db.session.commit()
-        # Nonaktifkan sementara buat_folder di Vercel agar tidak error
-        # buat_folder_pegawai(baru) 
         flash(f"Data {baru.nama} Berhasil Disimpan!", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Gagal Simpan: {str(e)}", "danger")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('data_pegawai')) # Balik ke halaman data
+
+@app.route('/hapus_pegawai/<int:id>')
+def hapus_pegawai(id):
+    if 'user_role' in session and session['user_role'] == 'admin':
+        p = Pegawai.query.get(id)
+        if p:
+            db.session.delete(p)
+            db.session.commit()
+            flash("Pegawai Berhasil Dihapus!", "warning")
+    return redirect(url_for('data_pegawai'))
 
 @app.route('/export_excel')
 def export_excel():
@@ -141,7 +155,6 @@ def export_excel():
         'Kecamatan': p.kecamatan, 'Desa Binaan': p.desa_binaan,
         'No HP': p.no_hp, 'TMT Pangkat': p.tmt_pangkat, 'Tgl Lahir': p.tgl_lahir
     } for p in pegawai]
-    
     df = pd.DataFrame(data_excel)
     f_path = '/tmp/Laporan_Kepegawaian.xlsx'
     df.to_excel(f_path, index=False)
@@ -152,7 +165,6 @@ def logout():
     session.clear()
     return redirect(url_for('landing'))
 
-# --- INISIALISASI DATABASE ---
 with app.app_context():
     db.create_all()
 
