@@ -43,6 +43,8 @@ class Pengumuman(db.Model):
     file_lampiran = db.Column(db.String(200), nullable=True)
     admin_name = db.Column(db.String(50), default="Admin Kabupaten")
     tanggal = db.Column(db.DateTime, default=datetime.now)
+    # Tambahan relasi agar saat hapus pengumuman, log pembacanya ikut terhapus
+    logs = db.relationship('LogBaca', backref='pengumuman', cascade="all, delete-orphan")
 
 class LogBaca(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,7 +87,6 @@ def dashboard():
     today = date.today()
     pegawai_list = Pegawai.query.all()
     
-    # Ambil 3 pengumuman terbaru untuk ringkasan
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
     notif_pangkat = []
@@ -113,7 +114,6 @@ def chat_info():
     role = session['user_role']
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
     
-    # Logic Otomatis Baca untuk PLKB
     if role == 'plkb':
         user = Pegawai.query.filter_by(nip=session['user_nip']).first()
         if user:
@@ -124,7 +124,6 @@ def chat_info():
                     db.session.add(baru)
             db.session.commit()
 
-    # Data Pembaca untuk Admin
     read_data = {}
     if role == 'admin':
         for info in info_list:
@@ -152,7 +151,23 @@ def kirim_pengumuman():
             baru = Pengumuman(isi=pesan, file_lampiran=filename)
             db.session.add(baru)
             db.session.commit()
-            flash("Informasi & Lampiran berhasil disiarkan!", "success")
+            flash("Informasi Berhasil Disiarkan!", "success")
+    return redirect(url_for('chat_info'))
+
+@app.route('/hapus_pengumuman/<int:id>')
+def hapus_pengumuman(id):
+    if session.get('user_role') == 'admin':
+        info = Pengumuman.query.get(id)
+        if info:
+            # Hapus file fisik jika ada lampiran
+            if info.file_lampiran:
+                file_path = os.path.join(app.config['CHAT_UPLOAD'], info.file_lampiran)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            
+            db.session.delete(info)
+            db.session.commit()
+            flash("Informasi berhasil dihapus!", "warning")
     return redirect(url_for('chat_info'))
 
 @app.route('/download_chat/<filename>')
