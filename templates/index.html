@@ -9,53 +9,44 @@
     <style>
         :root { --primary-blue: #00d2ff; --dark-bg: #1a1a1a; }
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; }
-        .nav-link { color: #adb5bd; transition: 0.3s; margin-bottom: 5px; }
-        .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 8px; }
+        .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+        .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
+        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 10px 15px; }
+        .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 10px; }
         .stat-card { border-radius: 15px; border: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        /* Style Tambahan untuk Bubble Chat */
-        .bubble-info { background: #e3f2fd; border-radius: 15px 15px 15px 0; padding: 12px 15px; margin-bottom: 10px; border-left: 5px solid #00d2ff; }
-        .info-container { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-height: 400px; overflow-y: auto; }
+        .stat-card:hover { transform: translateY(-5px); }
     </style>
 </head>
 <body>
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-2 d-none d-md-block sidebar p-3">
-            <div class="text-center mb-4">
+        <div class="col-md-2 d-none d-md-block sidebar p-0">
+            <div class="sidebar-header">
                 <i class="fas fa-robot fa-3x text-info mb-2"></i>
-                <h5 class="fw-bold text-info">SIDALAP</h5>
-                <hr class="bg-light">
+                <h5 class="fw-bold text-info mb-0">SIDALAP</h5>
             </div>
+            <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-home me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fas fa-comments me-2"></i> Chat/Info <span class="badge bg-danger rounded-pill">Baru</span></a></li>
-                {% if role == 'admin' %}
-                <li class="nav-item"><a class="nav-link" href="/export_excel"><i class="fas fa-file-excel me-2"></i> Export Excel</a></li>
-                {% endif %}
-                <li class="nav-item mt-4"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Keluar</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-database me-2"></i> Data Pegawai</a></li>
+            </ul>
+            <div class="nav-label">Komunikasi</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
+            </ul>
+            <div class="nav-label">Sistem</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
             </ul>
         </div>
 
         <div class="col-md-10 p-4">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
-
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 class="fw-bold text-dark">Ringkasan Sidalap</h3>
-                    <p class="text-muted small">Update: {{ today.strftime('%d %B %Y') }}</p>
+                    <h3 class="fw-bold text-dark mb-0">Ringkasan Statistik</h3>
+                    <p class="text-muted small mb-0">Wilayah Kabupaten Sukabumi</p>
                 </div>
                 <div id="clock" class="h4 fw-bold text-info border p-2 rounded shadow-sm bg-white"></div>
             </div>
@@ -65,7 +56,7 @@
                     <div class="card stat-card bg-white p-4 border-start border-info border-5">
                         <div class="d-flex align-items-center">
                             <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
-                            <div><h6 class="text-muted mb-0">Total Pegawai</h6><h3 class="fw-bold mb-0">{{ pegawai|length }}</h3></div>
+                            <div><h6 class="text-muted mb-0 small">Total Pegawai</h6><h3 class="fw-bold mb-0">{{ pegawai|length }}</h3></div>
                         </div>
                     </div>
                 </div>
@@ -73,94 +64,33 @@
                 <div class="col-md-4 mb-3">
                     <div class="card stat-card bg-white p-4 border-start border-warning border-5">
                         <div class="d-flex align-items-center">
-                            <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-award fa-2x"></i></div>
-                            <div><h6 class="text-muted mb-0">Naik Pangkat</h6><h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3></div>
+                            <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
+                            <div><h6 class="text-muted mb-0 small">Naik Pangkat</h6><h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="card stat-card bg-white p-4 border-start border-danger border-5">
                         <div class="d-flex align-items-center">
-                            <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-user-clock fa-2x"></i></div>
-                            <div><h6 class="text-muted mb-0">Pensiun</h6><h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3></div>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="col-md-8 mb-3">
-                    <div class="card stat-card bg-dark text-white p-4">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-primary text-white p-3 rounded-circle me-3"><i class="fas fa-user-check fa-2x"></i></div>
-                            <div>
-                                <h6 class="text-info mb-0 small">LOGIN SEBAGAI:</h6>
-                                <h4 class="fw-bold mb-0">{{ user_data.nama if user_data else 'PLKB KAB. SUKABUMI' }}</h4>
-                                <p class="mb-0 small text-secondary">Wilayah: {{ user_data.kecamatan if user_data else '-' }}</p>
-                            </div>
+                            <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
+                            <div><h6 class="text-muted mb-0 small">Pensiun</h6><h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3></div>
                         </div>
                     </div>
                 </div>
                 {% endif %}
             </div>
 
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-0 shadow-sm p-4 bg-info text-white rounded-4 mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="fw-bold mb-1"><i class="fas fa-bullhorn me-2"></i>Informasi Pusat IPeKB</h5>
-                                <p class="mb-0 small">Pastikan Anda selalu memantau instruksi terbaru di bawah ini.</p>
-                            </div>
-                            {% if role == 'admin' %}
-                            <button class="btn btn-light btn-sm fw-bold text-info shadow-sm" data-bs-toggle="modal" data-bs-target="#modalInfo">
-                                <i class="fas fa-paper-plane me-1"></i> KIRIM INFO
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="info-container p-4 shadow-sm border">
-                        <h6 class="fw-bold mb-3 text-muted border-bottom pb-2">PENGUMUMAN TERBARU</h6>
-                        {% if info_terkini %}
-                            {% for info in info_terkini %}
-                            <div class="bubble-info shadow-sm">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span class="badge bg-info text-dark">{{ info.admin_name }}</span>
-                                    <small class="text-muted" style="font-size: 0.75rem;">{{ info.tanggal.strftime('%d/%m/%Y %H:%M') }}</small>
-                                </div>
-                                <p class="mb-0 text-dark" style="font-size: 0.95rem;">{{ info.isi }}</p>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center py-5">
-                                <i class="fas fa-envelope-open text-muted fa-3x mb-3"></i>
-                                <p class="text-muted">Belum ada pengumuman masuk hari ini.</p>
-                            </div>
-                        {% endif %}
-                    </div>
+            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
+                <div style="z-index: 2; position: relative;">
+                    <h2 class="fw-bold">Selamat Datang di SIDALAP, {{ role.upper() }}!</h2>
+                    <p class="lead opacity-75">Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
+                    <hr class="w-25 border-info border-2">
+                    <p class="small">Silakan pilih menu <b>Data Pegawai</b> untuk manajemen berkas atau <b>Chat/Info</b> untuk koordinasi terbaru.</p>
+                    <a href="/chat_info" class="btn btn-info fw-bold px-4 mt-3 shadow">LIHAT INFO TERBARU <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
+                <i class="fas fa-chart-pie position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
             </div>
-
         </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalInfo" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <form action="/kirim_pengumuman" method="POST" class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold">SIARKAN INFORMASI</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="form-label fw-bold small">Isi Pesan/Instruksi</label>
-                    <textarea name="isi_pengumuman" class="form-control" rows="4" placeholder="Contoh: Jadwal rapat koordinasi hari Senin jam 09.00 di Balai..." required></textarea>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-4">
-                <button type="submit" class="btn btn-info px-5 text-white fw-bold shadow w-100">SIARKAN SEKARANG</button>
-            </div>
-        </form>
     </div>
 </div>
 
