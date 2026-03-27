@@ -5,7 +5,11 @@ import os
 app = Flask(__name__)
 app.secret_key = "dhede_bimz_final_full_2026_secure"
 
-# --- LOGIN DUMMY AGAR DESAIN TETAP JALAN ---
+# DATA DUMMY (Agar Dashboard Bos tidak kosong saat demo)
+DUMMY_PEGAWAI = [
+    {"nip": "19820406001", "nama": "HAMDANI", "jabatan": "PLKB", "jenis_pegawai": "PNS", "pangkat_gol": "III/a", "kecamatan": "Pabuaran"}
+]
+
 @app.route('/')
 def landing():
     if 'user_role' in session: return redirect(url_for('dashboard'))
@@ -16,12 +20,12 @@ def auth():
     user_in = request.form.get('username')
     pass_in = request.form.get('password')
     
-    # Login Admin
+    # Login Admin (Sesuai kode bos)
     if user_in == "admin" and pass_in == "admin123":
         session['user_role'] = 'admin'
         return redirect(url_for('dashboard'))
     
-    # Login User (NIP)
+    # Login NIP (Sesuai kode bos)
     if user_in == "19820406001":
         session['user_role'] = 'plkb'
         session['user_nip'] = user_in
@@ -35,23 +39,23 @@ def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     
-    # Data ini dikirim agar INDEX.HTML tampil sempurna seperti desain asli bos
-    pegawai_list = [
-        {"nip": "19820406001", "nama": "HAMDANI", "jabatan": "PLKB", "jenis_pegawai": "PNS", "pangkat_gol": "III/a"}
-    ]
-    
+    # Mengirimkan variabel yang dibutuhkan INDEX.HTML agar tampilan tidak pecah
     return render_template('index.html', 
                            role=role, 
-                           pegawai=pegawai_list, 
+                           pegawai=DUMMY_PEGAWAI, 
                            today=date.today(),
                            berkas=[], 
                            berkas_saya=[],
                            notif_pangkat=[], 
                            notif_pensiun=[],
                            pesan_masuk=[],
-                           soal=[]) # Tambahkan variabel lain jika di index.html ada pemanggilan 'soal'
+                           soal=[],
+                           user_data=DUMMY_PEGAWAI[0])
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('landing'))
+
+if __name__ == '__main__':
+    app.run(debug=True)
