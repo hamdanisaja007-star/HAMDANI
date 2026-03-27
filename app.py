@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.secret_key = "dhede_bimz_final_full_2026_sukabumi"
 
 # --- KONFIGURASI DATABASE & FOLDER (VERCEL FRIENDLY) ---
-# Menggunakan /tmp/ agar tidak error 'Read-only file system' di Vercel
+# Menggunakan /tmp/ karena Vercel hanya mengizinkan penulisan di folder ini
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/kepegawaian.db'
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,10 +28,11 @@ class Pegawai(db.Model):
     kecamatan = db.Column(db.String(50))
     desa_binaan = db.Column(db.String(100))
     tmt_pangkat = db.Column(db.Date, nullable=True)
-    tgl_lahir = db.Column(db.Date)
+    tgl_lahir = db.Column(db.Date, nullable=True)
 
 # --- FUNGSI OTOMATISASI FOLDER ---
 def buat_folder_pegawai(nama_pegawai):
+    if not nama_pegawai: return
     folder_aman = nama_pegawai.replace(" ", "_")
     for kat in KATEGORI_LIST:
         path = os.path.join(app.config['UPLOAD_FOLDER'], kat, folder_aman)
@@ -98,18 +99,19 @@ def dashboard():
 
     # Scan Berkas (Hanya jika Admin)
     if role == 'admin':
-        for kat in KATEGORI_LIST:
-            kat_path = os.path.join(app.config['UPLOAD_FOLDER'], kat)
-            if os.path.exists(kat_path):
-                for folder_nama in os.listdir(kat_path):
-                    pegawai_folder = os.path.join(kat_path, folder_nama)
-                    if os.path.isdir(pegawai_folder):
-                        for file in os.listdir(pegawai_folder):
-                            berkas_masuk.append({
-                                'nama_file': file, 
-                                'kategori': kat, 
-                                'pemilik': folder_nama.replace("_", " ")
-                            })
+        if os.path.exists(app.config['UPLOAD_FOLDER']):
+            for kat in KATEGORI_LIST:
+                kat_path = os.path.join(app.config['UPLOAD_FOLDER'], kat)
+                if os.path.exists(kat_path):
+                    for folder_nama in os.listdir(kat_path):
+                        pegawai_folder = os.path.join(kat_path, folder_nama)
+                        if os.path.isdir(pegawai_folder):
+                            for file in os.listdir(pegawai_folder):
+                                berkas_masuk.append({
+                                    'nama_file': file, 
+                                    'kategori': kat, 
+                                    'pemilik': folder_nama.replace("_", " ")
+                                })
     
     user_data = Pegawai.query.filter_by(nip=session.get('user_nip')).first() if role == 'plkb' else None
 
@@ -130,8 +132,13 @@ def tambah_pegawai():
     if session.get('user_role') != 'admin': return redirect(url_for('landing'))
     try:
         nama = request.form.get('nama')
-        tmt = datetime.strptime(request.form.get('tmt'), '%Y-%m-%d').date() if request.form.get('tmt') else None
-        lahir = datetime.strptime(request.form.get('lahir'), '%Y-%m-%d').date()
+        
+        # PERBAIKAN: Cek string sebelum di-convert agar tidak error strftime
+        tmt_raw = request.form.get('tmt')
+        lahir_raw = request.form.get('lahir')
+        
+        tmt = datetime.strptime(tmt_raw, '%Y-%m-%d').date() if tmt_raw else None
+        lahir = datetime.strptime(lahir_raw, '%Y-%m-%d').date() if lahir_raw else None
         
         baru = Pegawai(
             nip=request.form.get('nip'), 
@@ -146,7 +153,10 @@ def tambah_pegawai():
         )
         db.session.add(baru)
         db.session.commit()
+        
+        # Buat folder arsip untuk pegawai baru
         buat_folder_pegawai(nama)
+        
         flash(f"Data {nama} Berhasil Disimpan!", "success")
     except Exception as e:
         db.session.rollback()
@@ -158,7 +168,7 @@ def logout():
     session.clear()
     return redirect(url_for('landing'))
 
-# Inisialisasi Database
+# Inisialisasi Database dalam Folder /tmp/
 with app.app_context():
     db.create_all()
 
