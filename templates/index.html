@@ -12,8 +12,8 @@
         .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
         .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #333; }
         .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
-        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 10px 15px; }
-        .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 10px; }
+        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 10px 15px; text-decoration: none; }
+        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); border-radius: 10px; }
         .stat-card { border-radius: 15px; border: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card:hover { transform: translateY(-5px); }
     </style>
@@ -27,15 +27,21 @@
                 <i class="fas fa-robot fa-3x text-info mb-2"></i>
                 <h5 class="fw-bold text-info mb-0">SIDALAP</h5>
             </div>
+
             <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-database me-2"></i> Data Pegawai</a></li>
+                {% if session['user_role'] == 'admin' %}
+                    <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/berkas_masuk"><i class="fas fa-folder-open me-2"></i> Berkas Masuk</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="/profil"><i class="fas fa-user-circle me-2"></i> Profil Saya</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/berkas_saya"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
+                {% endif %}
             </ul>
-            <div class="nav-label">Komunikasi</div>
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
-            </ul>
+
             <div class="nav-label">Sistem</div>
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
@@ -52,6 +58,7 @@
             </div>
 
             <div class="row mb-4">
+                {% if session['user_role'] == 'admin' %}
                 <div class="col-md-4 mb-3">
                     <div class="card stat-card bg-white p-4 border-start border-info border-5">
                         <div class="d-flex align-items-center">
@@ -60,7 +67,6 @@
                         </div>
                     </div>
                 </div>
-                {% if role == 'admin' %}
                 <div class="col-md-4 mb-3">
                     <div class="card stat-card bg-white p-4 border-start border-warning border-5">
                         <div class="d-flex align-items-center">
@@ -77,16 +83,36 @@
                         </div>
                     </div>
                 </div>
+                {% else %}
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card bg-white p-4 border-start border-info border-5">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-file-upload fa-2x"></i></div>
+                            <div><h6 class="text-muted mb-0 small">Berkas Terkirim</h6><h3 class="fw-bold mb-0">Klik Menu Berkas</h3></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card stat-card bg-white p-4 border-start border-success border-5">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success text-white p-3 rounded-circle me-3"><i class="fas fa-bullhorn fa-2x"></i></div>
+                            <div><h6 class="text-muted mb-0 small">Info Terbaru</h6><h3 class="fw-bold mb-0">{{ info_terkini|length }}</h3></div>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
             </div>
 
             <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
                 <div style="z-index: 2; position: relative;">
-                    <h2 class="fw-bold">Selamat Datang di SIDALAP, {{ role.upper() }}!</h2>
+                    <h2 class="fw-bold">Selamat Datang di SIDALAP, {{ session['user_role'].upper() }}!</h2>
+                    {% if user_now %}
+                        <h4 class="text-info">{{ user_now.nama }}</h4>
+                    {% endif %}
                     <p class="lead opacity-75">Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
                     <hr class="w-25 border-info border-2">
-                    <p class="small">Silakan pilih menu <b>Data Pegawai</b> untuk manajemen berkas atau <b>Chat/Info</b> untuk koordinasi terbaru.</p>
-                    <a href="/chat_info" class="btn btn-info fw-bold px-4 mt-3 shadow">LIHAT INFO TERBARU <i class="fas fa-arrow-right ms-2"></i></a>
+                    <p class="small">Pastikan data binaan Desa dan Kecamatan Anda sudah diperbarui secara berkala.</p>
+                    <a href="/chat_info" class="btn btn-info fw-bold px-4 mt-3 shadow">CEK PENGUMUMAN <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
                 <i class="fas fa-chart-pie position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
             </div>
