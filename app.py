@@ -11,11 +11,10 @@ app.secret_key = "dhede_bimz_final_full_2026_secure"
 # --- KONFIGURASI DATABASE & FOLDER ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/kepegawaian.db'
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
-app.config['CHAT_UPLOAD'] = '/tmp/chat_files'  # Folder lampiran chat
-app.config['BERKAS_PEGAWAI'] = '/tmp/berkas_pegawai' # Folder Loker Digital PLKB
+app.config['CHAT_UPLOAD'] = '/tmp/chat_files'
+app.config['BERKAS_PEGAWAI'] = '/tmp/berkas_pegawai'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan semua folder tersedia
 os.makedirs(app.config['CHAT_UPLOAD'], exist_ok=True)
 os.makedirs(app.config['BERKAS_PEGAWAI'], exist_ok=True)
 
@@ -55,10 +54,6 @@ class LogBaca(db.Model):
     nama_pembaca = db.Column(db.String(100))
     waktu_baca = db.Column(db.DateTime, default=datetime.now)
 
-class BankSoal(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    pertanyaan = db.Column(db.Text, nullable=False)
-
 # --- ROUTES ---
 
 @app.route('/')
@@ -81,47 +76,43 @@ def auth():
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD ---
+# --- DASHBOARD UTAMA (PENTING: DATA PEGAWAI ADA DI SINI) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
-    pegawai_list = Pegawai.query.all()
+    pegawai_list = Pegawai.query.all() # Mengambil semua data pegawai
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
-    notif_pangkat = []
-    notif_pensiun = []
+    notif_pangkat, notif_pensiun = [], []
     user_data = None
 
     if role == 'admin':
+        # Hitung notifikasi untuk dashboard admin
         for p in pegawai_list:
             if p.jenis_pegawai == 'PNS' and p.tmt_pangkat:
                 if (today - p.tmt_pangkat).days >= 1370: notif_pangkat.append(p.nama)
             if p.tgl_lahir and (today - p.tgl_lahir).days >= 20805:
                 notif_pensiun.append(p.nama)
     else:
+        # Jika PLKB, ambil data profilnya sendiri
         user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
 
+    # Variabel 'pegawai' dikirim agar tabel data pegawai muncul di index.html
     return render_template('index.html', role=role, user_data=user_data, 
                            pegawai=pegawai_list, today=today,
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
                            info_terkini=info_list)
 
-# --- DATA PEGAWAI (RESTORED ADMIN VIEW) ---
+# --- MANAJEMEN DATA (Hanya untuk Admin) ---
 @app.route('/data_pegawai')
 def data_pegawai():
-    if 'user_role' not in session: return redirect(url_for('landing'))
-    role = session['user_role']
+    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
     pegawai_list = Pegawai.query.all()
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
-    
-    user_data = None
-    if role == 'plkb':
-        user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
-        
-    return render_template('data_pegawai.html', role=role, pegawai=pegawai_list, 
-                           user_data=user_data, info_terkini=info_list, today=date.today())
+    return render_template('data_pegawai.html', role='admin', pegawai=pegawai_list, 
+                           today=date.today(), info_terkini=info_list, user_data=None)
 
 @app.route('/tambah_pegawai', methods=['POST'])
 def tambah_pegawai():
@@ -142,7 +133,7 @@ def tambah_pegawai():
         except Exception as e:
             db.session.rollback()
             flash(f"Gagal Simpan: {str(e)}", "danger")
-    return redirect(url_for('data_pegawai'))
+    return redirect(url_for('dashboard')) # Kembali ke dashboard setelah tambah
 
 @app.route('/hapus_pegawai/<int:id>')
 def hapus_pegawai(id):
@@ -152,9 +143,9 @@ def hapus_pegawai(id):
             db.session.delete(p)
             db.session.commit()
             flash("Pegawai Berhasil Dihapus!", "warning")
-    return redirect(url_for('data_pegawai'))
+    return redirect(url_for('dashboard'))
 
-# --- FITUR LOKER DIGITAL PLKB ---
+# --- FITUR LOKER DIGITAL (Hanya untuk PLKB) ---
 @app.route('/berkas_saya')
 def berkas_saya():
     if session.get('user_role') != 'plkb': return redirect(url_for('dashboard'))
@@ -184,46 +175,10 @@ def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
-    
-    if role == 'plkb':
-        user = Pegawai.query.filter_by(nip=session['user_nip']).first()
-        if user:
-            for info in info_list:
-                if not LogBaca.query.filter_by(pengumuman_id=info.id, nip_pembaca=user.nip).first():
-                    db.session.add(LogBaca(pengumuman_id=info.id, nip_pembaca=user.nip, nama_pembaca=user.nama))
-            db.session.commit()
-
-    read_data = {info.id: LogBaca.query.filter_by(pengumuman_id=info.id).all() for info in info_list} if role == 'admin' else {}
     user_data = Pegawai.query.filter_by(nip=session.get('user_nip')).first() if role == 'plkb' else None
-        
+    
+    read_data = {info.id: LogBaca.query.filter_by(pengumuman_id=info.id).all() for info in info_list} if role == 'admin' else {}
     return render_template('chat_info.html', role=role, user_data=user_data, info_terkini=info_list, read_data=read_data, today=date.today())
-
-@app.route('/kirim_pengumuman', methods=['POST'])
-def kirim_pengumuman():
-    if session.get('user_role') == 'admin':
-        pesan, file = request.form.get('isi_pengumuman'), request.files.get('lampiran')
-        filename = None
-        if file and allowed_file(file.filename):
-            filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
-            file.save(os.path.join(app.config['CHAT_UPLOAD'], filename))
-        if pesan:
-            db.session.add(Pengumuman(isi=pesan, file_lampiran=filename))
-            db.session.commit()
-            flash("Informasi Berhasil Disiarkan!", "success")
-    return redirect(url_for('chat_info'))
-
-@app.route('/hapus_pengumuman/<int:id>')
-def hapus_pengumuman(id):
-    if session.get('user_role') == 'admin':
-        info = Pengumuman.query.get(id)
-        if info:
-            if info.file_lampiran:
-                file_path = os.path.join(app.config['CHAT_UPLOAD'], info.file_lampiran)
-                if os.path.exists(file_path): os.remove(file_path)
-            db.session.delete(info)
-            db.session.commit()
-            flash("Informasi berhasil dihapus!", "warning")
-    return redirect(url_for('chat_info'))
 
 @app.route('/export_excel')
 def export_excel():
