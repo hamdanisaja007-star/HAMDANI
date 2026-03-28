@@ -1,0 +1,80 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-inbox me-2 text-info"></i>Kotak Masuk Berkas</h3>
+            <p class="text-muted small">Daftar kiriman berkas dari seluruh PLKB Kabupaten Sukabumi.</p>
+        </div>
+        <div class="badge bg-info p-2 px-3 rounded-pill shadow-sm">
+            <i class="fas fa-file-alt me-1"></i> Total: {{ data|length }} Berkas
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-dark">
+                    <tr>
+                        <th class="ps-4 py-3">PENGIRIM (PLKB)</th>
+                        <th>KATEGORI</th>
+                        <th>NAMA FILE</th>
+                        <th class="text-center">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in data %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info-subtle text-info p-2 rounded-circle me-3">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ b.nama }}</div>
+                                    <small class="text-muted">NIP: {{ b.nip }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if b.kat == 'PANGKAT' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-medal me-1"></i> KENAIKAN PANGKAT</span>
+                            {% elif b.kat == 'PENSIUN' %}
+                                <span class="badge bg-danger"><i class="fas fa-user-clock me-1"></i> PENSIUN</span>
+                            {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-folder me-1"></i> UMUM / ARSIP</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small text-truncate" style="max-width: 250px;">
+                                <i class="far fa-file-alt me-1 text-primary"></i> {{ b.file }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group shadow-sm rounded-pill">
+                                <a href="/download/{{ b.nip }}/{{ b.file }}" class="btn btn-sm btn-white border-end px-3" title="Lihat/Download">
+                                    <i class="fas fa-download text-success"></i> Unduh
+                                </a>
+                                <button class="btn btn-sm btn-white px-3" onclick="alert('Fitur Hapus Berkas Hubungi Developer')">
+                                    <i class="fas fa-trash text-danger"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="opacity-25 mb-3">
+                                <i class="fas fa-folder-open fa-4x"></i>
+                            </div>
+                            <h6 class="text-muted">Belum ada kiriman berkas dari PLKB.</h6>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
