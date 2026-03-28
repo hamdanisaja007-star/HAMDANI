@@ -14,6 +14,9 @@
         .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
         .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 10px 15px; text-decoration: none; }
         .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); border-radius: 10px; }
+        .stat-card { transition: transform 0.2s; border: none; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .pointer { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -28,7 +31,7 @@
             <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
                 {% if session['user_role'] == 'admin' %}
-                    <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
                     <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/berkas_masuk"><i class="fas fa-folder-open me-2"></i> Berkas Masuk</a></li>
@@ -44,23 +47,123 @@
         <div class="col-md-10 p-4">
             {% block content %}
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark mb-0">Ringkasan Statistik</h3>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">Ringkasan Statistik</h3>
+                    <p class="text-muted small mb-0">Wilayah Kabupaten Sukabumi</p>
+                </div>
                 <div id="clock" class="h4 fw-bold text-info border p-2 rounded shadow-sm bg-white"></div>
             </div>
 
-            <div class="row mb-4">
+            <div class="row mb-2">
                 {% if session['user_role'] == 'admin' %}
                 <div class="col-md-4 mb-3">
-                    <div class="card p-4 border-start border-info border-5 shadow-sm">
-                        <h6>Total Pegawai</h6><h3 class="fw-bold">{{ pegawai|length }}</h3>
+                    <div class="card stat-card bg-white p-4 border-start border-info border-5 shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
+                            <div>
+                                <h6 class="text-muted mb-0 small">Total Pegawai</h6>
+                                <h3 class="fw-bold mb-0">{{ pegawai|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card bg-white p-4 border-start border-warning border-5 shadow-sm pointer" 
+                         data-bs-toggle="collapse" data-bs-target="#collapsePangkat">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
+                            <div>
+                                <h6 class="text-muted mb-0 small">Naik Pangkat</h6>
+                                <h3 class="fw-bold mb-0">{{ notif_pangkat|length if notif_pangkat else 0 }}</h3>
+                                <small class="text-warning">Klik untuk detail</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card bg-white p-4 border-start border-danger border-5 shadow-sm pointer" 
+                         data-bs-toggle="collapse" data-bs-target="#collapsePensiun">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
+                            <div>
+                                <h6 class="text-muted mb-0 small">Pensiun</h6>
+                                <h3 class="fw-bold mb-0">{{ notif_pensiun|length if notif_pensiun else 0 }}</h3>
+                                <small class="text-danger">Klik untuk detail</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
             </div>
 
-            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4">
-                <h2 class="fw-bold">Selamat Datang, {{ session['user_role'].upper() }}!</h2>
-                <p>Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
+            <div class="row">
+                <div class="collapse mb-4" id="collapsePangkat">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-warning text-dark fw-bold">
+                            <i class="fas fa-user-edit me-2"></i>Daftar Pegawai Usulan Naik Pangkat
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr><th>Nama</th><th>NIP</th><th>TMT Terakhir</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in notif_pangkat %}
+                                    <tr>
+                                        <td class="fw-bold">{{ p.nama }}</td>
+                                        <td>{{ p.nip }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ p.tmt_pangkat }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center py-3 text-muted">Tidak ada data usulan naik pangkat.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mb-4" id="collapsePensiun">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-header bg-danger text-white fw-bold">
+                            <i class="fas fa-user-clock me-2"></i>Daftar Pegawai Jelang Pensiun
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr><th>Nama</th><th>NIP</th><th>Tanggal Lahir</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in notif_pensiun %}
+                                    <tr>
+                                        <td class="fw-bold">{{ p.nama }}</td>
+                                        <td>{{ p.nip }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ p.tgl_lahir }}</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center py-3 text-muted">Tidak ada data pegawai pensiun.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
+                <div style="z-index: 2; position: relative;">
+                    <h2 class="fw-bold">Selamat Datang di SIDALAP, {{ session['user_role'].upper() }}!</h2>
+                    {% if user_now %}
+                        <h4 class="text-info">{{ user_now.nama }}</h4>
+                    {% endif %}
+                    <p class="lead opacity-75">Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
+                    <hr class="w-25 border-info border-2">
+                    <p class="small">Pastikan data binaan Desa dan Kecamatan Anda sudah diperbarui secara berkala.</p>
+                    <a href="/chat_info" class="btn btn-info fw-bold px-4 mt-3 shadow text-white">CEK PENGUMUMAN <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                <i class="fas fa-chart-pie position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
             </div>
             {% endblock %}
         </div>
@@ -71,9 +174,12 @@
 <script>
     function startTime() {
         const today = new Date();
-        document.getElementById('clock').innerHTML = '<i class="far fa-clock me-2"></i>' + today.toLocaleTimeString() + " WIB";
+        let h = today.getHours(); let m = today.getMinutes(); let s = today.getSeconds();
+        m = checkTime(m); s = checkTime(s);
+        document.getElementById('clock').innerHTML = '<i class="far fa-clock me-2"></i>' + h + ":" + m + ":" + s + " WIB";
         setTimeout(startTime, 1000);
     }
+    function checkTime(i) { if (i < 10) {i = "0" + i}; return i; }
     startTime();
 </script>
 </body>
