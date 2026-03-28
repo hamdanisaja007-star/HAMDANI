@@ -16,6 +16,7 @@
         .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 10px; }
         .stat-card { border-radius: 15px; border: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .stat-card:hover { transform: translateY(-5px); }
+        .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -30,7 +31,11 @@
             <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-database me-2"></i> Data Pegawai</a></li>
+                {% if role == 'admin' %}
+                <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-database me-2"></i> Manajemen Data</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="/berkas_saya"><i class="fas fa-folder-open me-2"></i> Loker Digital</a></li>
+                {% endif %}
             </ul>
             <div class="nav-label">Komunikasi</div>
             <ul class="nav flex-column">
@@ -80,16 +85,67 @@
                 {% endif %}
             </div>
 
-            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
+            <div class="card border-0 shadow-sm p-4 bg-dark text-white rounded-4 mb-4 overflow-hidden position-relative">
                 <div style="z-index: 2; position: relative;">
-                    <h2 class="fw-bold">Selamat Datang di SIDALAP, {{ role.upper() }}!</h2>
-                    <p class="lead opacity-75">Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
-                    <hr class="w-25 border-info border-2">
-                    <p class="small">Silakan pilih menu <b>Data Pegawai</b> untuk manajemen berkas atau <b>Chat/Info</b> untuk koordinasi terbaru.</p>
-                    <a href="/chat_info" class="btn btn-info fw-bold px-4 mt-3 shadow">LIHAT INFO TERBARU <i class="fas fa-arrow-right ms-2"></i></a>
+                    <h2 class="fw-bold text-info">Selamat Datang, {{ role.upper() }}!</h2>
+                    <p class="lead opacity-75 mb-0">Sistem Informasi Data Lini Lapangan IPeKB Kabupaten Sukabumi.</p>
                 </div>
-                <i class="fas fa-chart-pie position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
+                <i class="fas fa-chart-pie position-absolute text-secondary opacity-25" style="font-size: 150px; bottom: -30px; right: -10px; z-index: 1;"></i>
             </div>
+
+            {% if role == 'admin' %}
+            <div class="table-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0"><i class="fas fa-list me-2"></i> Data Seluruh Pegawai</h5>
+                    <a href="/export_excel" class="btn btn-success btn-sm"><i class="fas fa-file-excel me-1"></i> Export Excel</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>NIP</th>
+                                <th>Nama Lengkap</th>
+                                <th>Jabatan</th>
+                                <th>Kecamatan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pegawai %}
+                            <tr>
+                                <td class="fw-bold">{{ p.nip }}</td>
+                                <td>{{ p.nama }}</td>
+                                <td><span class="badge bg-info text-dark">{{ p.jabatan }}</span></td>
+                                <td>{{ p.kecamatan }}</td>
+                                <td>
+                                    <a href="/hapus_pegawai/{{ p.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus data ini?')"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center text-muted">Belum ada data pegawai.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold border-bottom pb-2 mb-3">Informasi Akun Anda</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>NAMA:</strong> {{ user_data.nama }}</p>
+                        <p><strong>NIP:</strong> {{ user_data.nip }}</p>
+                        <p><strong>JABATAN:</strong> {{ user_data.jabatan }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>DESA BINAAN:</strong> {{ user_data.desa_binaan }}</p>
+                        <p><strong>HP:</strong> {{ user_data.no_hp }}</p>
+                    </div>
+                </div>
+                <a href="/berkas_saya" class="btn btn-primary w-100 mt-3 fw-bold">BUKA LOKER DOKUMEN SAYA</a>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 </div>
