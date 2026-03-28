@@ -1,5 +1,4 @@
 Flask
 Flask-SQLAlchemy
 pandas
-openpyxl
-pymysql
+werkzeug
