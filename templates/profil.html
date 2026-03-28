@@ -1,0 +1,106 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+                <div class="card-header bg-dark p-4 text-white d-flex align-items-center justify-content-between">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-user-edit me-2 text-info"></i>Lengkapi Profil Saya</h4>
+                    <span class="badge bg-info text-white px-3 py-2 rounded-pill">NIP: {{ user_now.nip }}</span>
+                </div>
+                
+                <form action="/update_profil" method="POST" enctype="multipart/form-data" class="card-body p-4 p-md-5">
+                    <div class="row">
+                        <div class="col-md-4 text-center border-end mb-4 mb-md-0">
+                            <div class="position-relative d-inline-block mb-3">
+                                <img id="preview" src="{{ url_for('serve_foto', filename=user_now.foto) if user_now.foto else 'https://via.placeholder.com/150' }}" 
+                                     class="rounded-circle shadow-sm border border-info border-4" 
+                                     style="width: 180px; height: 180px; object-fit: cover;">
+                                <label for="foto_profil" class="btn btn-sm btn-info text-white position-absolute bottom-0 end-0 rounded-circle shadow">
+                                    <i class="fas fa-camera"></i>
+                                </label>
+                            </div>
+                            <input type="file" name="foto_profil" id="foto_profil" class="d-none" onchange="previewImage(event)">
+                            <h5 class="fw-bold text-dark mt-2">{{ user_now.nama }}</h5>
+                            <p class="text-muted small">Status: <span class="badge bg-secondary">{{ user_now.jenis_pegawai }}</span></p>
+                            
+                            <div class="alert alert-light border small text-start mt-4">
+                                <i class="fas fa-info-circle text-info me-1"></i>
+                                <strong>Tips:</strong> Gunakan foto formal (seragam dinas) agar data kepegawaian terlihat profesional.
+                            </div>
+                        </div>
+
+                        <div class="col-md-8 ps-md-5">
+                            <div class="row">
+                                <div class="col-md-12 mb-4">
+                                    <label class="form-label fw-bold small text-muted">JABATAN SAAT INI</label>
+                                    <input type="text" name="jabatan" class="form-control form-control-lg bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.jabatan or '' }}" placeholder="Contoh: PLKB Ahli Muda" required>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">PANGKAT / GOLONGAN</label>
+                                    <input type="text" name="pangkat_gol" class="form-control bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.pangkat_gol or '' }}" placeholder="Contoh: Penata / IIIc">
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">TMT PANGKAT TERAKHIR</label>
+                                    <input type="date" name="tmt_pangkat" class="form-control bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.tmt_pangkat or '' }}" required>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">TANGGAL LAHIR</label>
+                                    <input type="date" name="tgl_lahir" class="form-control bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.tgl_lahir or '' }}" required>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">NOMOR HP (WHATSAPP)</label>
+                                    <input type="text" name="no_hp" class="form-control bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.no_hp or '' }}" placeholder="08xxxxxxx">
+                                </div>
+
+                                <hr class="my-3 opacity-50">
+                                <h6 class="fw-bold text-info mb-3">WILAYAH BINAAN</h6>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">KECAMATAN</label>
+                                    <input type="text" name="kecamatan" class="form-control bg-light border-0 shadow-sm" 
+                                           value="{{ user_now.kecamatan or '' }}" placeholder="Contoh: Cisaat">
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold small text-muted">DESA/KELURAHAN BINAAN</label>
+                                    <textarea name="desa_binaan" class="form-control bg-light border-0 shadow-sm" rows="2" 
+                                              placeholder="Sebutkan desa-desa binaan Anda">{{ user_now.desa_binaan or '' }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-info btn-lg w-100 text-white fw-bold shadow-sm rounded-3">
+                                    <i class="fas fa-save me-2"></i>SIMPAN PERUBAHAN PROFIL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fungsi untuk pratinjau foto sebelum upload
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            var output = document.getElementById('preview');
+            output.src = reader.result;
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+{% endblock %}
