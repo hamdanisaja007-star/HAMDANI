@@ -3,178 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATA PEGAWAI | SIDALAP</title>
+    <title>LOKER DIGITAL | SIDALAP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary-blue: #00d2ff; }
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; }
-        .nav-link { color: #adb5bd; transition: 0.3s; margin-bottom: 5px; }
-        .nav-link:hover, .nav-link.active { color: var(--primary-blue); background: rgba(0,210,255,0.1); border-radius: 8px; }
-        .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .badge-pns { background-color: var(--primary-blue); color: #000; font-weight: bold; }
-        .filter-box { background: #fff; border-radius: 10px; }
+        :root { --primary-blue: #00d2ff; --deep-blue: #004e92; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { background: #1a1a1a; min-height: 100vh; position: sticky; top: 0; }
+        .nav-link { color: #888; transition: 0.3s; margin: 5px 15px; padding: 12px; border-radius: 12px; display: flex; align-items: center; text-decoration: none; }
+        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, var(--primary-blue), var(--deep-blue)); }
+        .nav-label { font-size: 0.7rem; color: #555; text-transform: uppercase; padding: 20px 25px 5px; font-weight: 800; }
+        .glass-header { background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); border-radius: 20px; padding: 30px; color: white; margin-bottom: 30px; }
+        .folder-card { border: none; border-radius: 20px; transition: 0.3s; cursor: pointer; background: white; }
+        .folder-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-2 d-none d-md-block sidebar p-3">
-            <div class="text-center mb-4">
-                <i class="fas fa-robot fa-3x text-info mb-2"></i>
-                <h5 class="fw-bold text-info">SIDALAP</h5>
-                <hr class="bg-light">
+        <div class="col-md-2 d-none d-md-block sidebar p-0 text-center text-white">
+            <div class="py-5"><i class="fas fa-robot fa-3x text-info mb-2"></i><h4 class="fw-bold">SIDALAP</h4></div>
+            <div class="text-start">
+                <div class="nav-label">Menu Utama</div>
+                <a class="nav-link" href="/dashboard"><i class="fas fa-th-large me-2"></i> Dashboard</a>
+                <a class="nav-link active" href="/berkas_saya"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a>
+                <div class="nav-label">Komunikasi</div>
+                <a class="nav-link" href="/chat_info"><i class="fas fa-comment-alt me-2"></i> Chat / Info</a>
+                <div class="nav-label">Sistem</div>
+                <a class="nav-link text-danger" href="/logout"><i class="fas fa-power-off me-2"></i> Logout</a>
             </div>
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home me-2"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
-                {% if role == 'admin' %}
-                <li class="nav-item"><a class="nav-link" href="/export_excel"><i class="fas fa-file-excel me-2"></i> Export Excel</a></li>
-                {% endif %}
-                <li class="nav-item mt-4"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Keluar</a></li>
-            </ul>
         </div>
 
         <div class="col-md-10 p-4">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
+            <div class="glass-header shadow">
+                <h2 class="fw-bold mb-1">Loker Dokumen Digital</h2>
+                <p class="mb-0 opacity-75">Status Pegawai: <span class="badge bg-white text-dark">{{ user_data.jenis_pegawai }}</span></p>
+            </div>
 
-            <div class="table-container">
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                    <h5 class="fw-bold text-dark mb-0"><i class="fas fa-database me-2"></i>Database Lini Lapangan</h5>
-                    
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <select id="filterKecamatan" class="form-select form-select-sm shadow-sm" style="width: 180px;">
-                            <option value="">Semua Kecamatan</option>
-                            <option value="Cisolok">Cisolok</option>
-                            <option value="Cikakak">Cikakak</option>
-                            <option value="Palabuhanratu">Palabuhanratu</option>
-                            <option value="Simpenan">Simpenan</option>
-                            <option value="Cikembar">Cikembar</option>
-                            <option value="Cibadak">Cibadak</option>
-                            <option value="Cisaat">Cisaat</option>
-                            <option value="Sukatani">Sukatani</option>
-                        </select>
+            <div class="row g-4">
+                {% if user_data.jenis_pegawai == 'PNS' %}
+                    {% set folders = [('Umum', 'fa-file-alt'), ('Kenaikan Pangkat', 'fa-arrow-circle-up'), ('Pensiun', 'fa-blind'), ('Jabatan', 'fa-briefcase')] %}
+                {% else %}
+                    {% set folders = [('Umum', 'fa-file-alt'), ('Perpanjangan Kontrak', 'fa-file-contract')] %}
+                {% endif %}
 
-                        <div class="input-group input-group-sm shadow-sm" style="width: 250px;">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                            <input type="text" id="inputCari" class="form-control border-start-0" placeholder="Cari Nama atau NIP...">
-                        </div>
-
-                        {% if role == 'admin' %}
-                        <button class="btn btn-info btn-sm fw-bold text-white shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
-                            <i class="fas fa-plus-circle me-1"></i> TAMBAH DATA
-                        </button>
-                        {% endif %}
+                {% for name, icon in folders %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="folder-card p-4 text-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}">
+                        <div class="mb-3 text-info"><i class="fas {{ icon }} fa-3x"></i></div>
+                        <h6 class="fw-bold mb-1 text-dark">{{ name }}</h6>
+                        <small class="text-muted">Klik untuk upload</small>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle" id="tabelPegawai">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>NIP</th>
-                                <th>NAMA LENGKAP</th>
-                                <th>JABATAN</th>
-                                <th>STATUS</th>
-                                <th>KECAMATAN</th>
-                                <th class="text-center">AKSI</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in pegawai %}
-                            <tr>
-                                <td class="fw-bold text-primary">{{ p.nip }}</td>
-                                <td class="fw-bold">{{ p.nama }}</td>
-                                <td>{{ p.jabatan }}</td>
-                                <td><span class="badge {{ 'badge-pns' if p.jenis_pegawai == 'PNS' else 'bg-secondary' }}">{{ p.jenis_pegawai }}</span></td>
-                                <td class="col-kecamatan">{{ p.kecamatan }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group">
-                                        <button class="btn btn-sm btn-outline-info" title="Lihat Berkas"><i class="fas fa-folder-open"></i></button>
-                                        {% if role == 'admin' %}
-                                        <a href="/hapus_pegawai/{{ p.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus data?')"><i class="fas fa-trash-alt"></i></a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="6" class="text-center text-muted py-4">Belum ada data pegawai.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="modal fade" id="modal-{{ loop.index }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form action="/upload_dokumen" method="POST" enctype="multipart/form-data" class="modal-content border-0 rounded-4 shadow">
+                            <div class="modal-header bg-info text-white border-0">
+                                <h5 class="modal-title fw-bold">Upload Berkas {{ name }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <input type="hidden" name="kategori" value="{{ name }}">
+                                <div class="text-center mb-3 text-light"><i class="fas {{ icon }} fa-4x"></i></div>
+                                <label class="form-label small fw-bold">Pilih File (PDF/JPG)</label>
+                                <input type="file" name="file_berkas" class="form-control" required>
+                                <div class="mt-2 small text-muted text-center italic">Pastikan dokumen terbaca jelas</div>
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="submit" class="btn btn-info w-100 text-white fw-bold py-2 rounded-pill shadow">SIMPAN KE SERVER</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-5">
+                <h5 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Berkas yang Telah Diupload</h5>
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Nama File</th>
+                                    <th>Kategori</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in files %}
+                                <tr>
+                                    <td class="ps-4 small text-truncate" style="max-width: 300px;">{{ f }}</td>
+                                    <td><span class="badge bg-info-subtle text-info border border-info px-2">{{ f.split('_')[0] }}</span></td>
+                                    <td class="text-center"><i class="fas fa-check-circle text-success"></i> Aman</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not files %}
+                                <tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada berkas di server.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalTambah" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form action="/tambah_pegawai" method="POST" class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold">INPUT DATA BARU</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold small">NIP</label><input type="text" name="nip" class="form-control shadow-sm" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold small">NAMA</label><input type="text" name="nama" class="form-control shadow-sm" required></div>
-                    <div class="col-md-6"><label class="form-label fw-bold small">STATUS</label><select name="jenis_pegawai" class="form-select shadow-sm"><option value="PNS">PNS</option><option value="PPPK">PPPK</option></select></div>
-                    <div class="col-md-6"><label class="form-label fw-bold small">JABATAN</label><input type="text" name="jabatan" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold small">KECAMATAN</label><input type="text" name="kecamatan" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold small">TMT PANGKAT</label><input type="date" name="tmt" class="form-control shadow-sm"></div>
-                    <div class="col-md-4"><label class="form-label fw-bold small">TGL LAHIR</label><input type="date" name="lahir" class="form-control shadow-sm"></div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-4">
-                <button type="submit" class="btn btn-info px-5 text-white fw-bold shadow w-100">SIMPAN DATA</button>
-            </div>
-        </form>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    const inputCari = document.getElementById('inputCari');
-    const filterKecamatan = document.getElementById('filterKecamatan');
-
-    function jalankanSaring() {
-        const kataKunci = inputCari.value.toLowerCase();
-        const kecTerpilih = filterKecamatan.value.toLowerCase();
-        const rows = document.querySelectorAll('#tabelPegawai tbody tr');
-
-        rows.forEach(row => {
-            // Index 0 = NIP, Index 1 = Nama, Index 4 = Kecamatan
-            const nip = row.cells[0].textContent.toLowerCase();
-            const nama = row.cells[1].textContent.toLowerCase();
-            const kecamatan = row.cells[4].textContent.toLowerCase();
-
-            const cocokCari = nip.includes(kataKunci) || nama.includes(kataKunci);
-            const cocokKecamatan = kecTerpilih === "" || kecamatan.includes(kecTerpilih);
-
-            if (cocokCari && cocokKecamatan) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
-
-    inputCari.addEventListener('keyup', jalankanSaring);
-    filterKecamatan.addEventListener('change', jalankanSaring);
-</script>
-
 </body>
 </html>
