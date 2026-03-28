@@ -25,7 +25,7 @@ def allowed_file(filename):
 
 db = SQLAlchemy(app)
 
-# --- MODELS ---
+# --- MODELS (Data Tetap Sama) ---
 class Pegawai(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nip = db.Column(db.String(20), unique=True, nullable=False)
@@ -76,84 +76,53 @@ def auth():
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD UTAMA (PENTING: DATA PEGAWAI ADA DI SINI) ---
+# --- DASHBOARD (RESTORASI TOTAL) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
-    pegawai_list = Pegawai.query.all() # Mengambil semua data pegawai
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
+    # Inisialisasi variabel agar tidak error di template
+    pegawai_list = []
     notif_pangkat, notif_pensiun = [], []
     user_data = None
 
     if role == 'admin':
-        # Hitung notifikasi untuk dashboard admin
+        # ADMIN: Menampilkan SEMUA Data Pegawai
+        pegawai_list = Pegawai.query.all()
         for p in pegawai_list:
             if p.jenis_pegawai == 'PNS' and p.tmt_pangkat:
                 if (today - p.tmt_pangkat).days >= 1370: notif_pangkat.append(p.nama)
             if p.tgl_lahir and (today - p.tgl_lahir).days >= 20805:
                 notif_pensiun.append(p.nama)
     else:
-        # Jika PLKB, ambil data profilnya sendiri
+        # PLKB: Menampilkan PROFIL PRIBADI
         user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
 
-    # Variabel 'pegawai' dikirim agar tabel data pegawai muncul di index.html
-    return render_template('index.html', role=role, user_data=user_data, 
-                           pegawai=pegawai_list, today=today,
-                           notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
+    return render_template('index.html', 
+                           role=role, 
+                           user_data=user_data, 
+                           pegawai=pegawai_list, # Ini yang bikin tabel muncul di Admin
+                           today=today,
+                           notif_pangkat=notif_pangkat, 
+                           notif_pensiun=notif_pensiun,
                            info_terkini=info_list)
 
-# --- MANAJEMEN DATA (Hanya untuk Admin) ---
-@app.route('/data_pegawai')
-def data_pegawai():
-    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
-    pegawai_list = Pegawai.query.all()
-    info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
-    return render_template('data_pegawai.html', role='admin', pegawai=pegawai_list, 
-                           today=date.today(), info_terkini=info_list, user_data=None)
-
-@app.route('/tambah_pegawai', methods=['POST'])
-def tambah_pegawai():
-    if session.get('user_role') == 'admin':
-        try:
-            tmt = datetime.strptime(request.form.get('tmt'), '%Y-%m-%d').date() if request.form.get('tmt') else None
-            lahir = datetime.strptime(request.form.get('lahir'), '%Y-%m-%d').date() if request.form.get('lahir') else None
-            baru = Pegawai(
-                nip=request.form.get('nip'), nama=request.form.get('nama'), 
-                jabatan=request.form.get('jabatan'), jenis_pegawai=request.form.get('jenis_pegawai'),
-                pangkat_gol=request.form.get('pangkat_gol'), kecamatan=request.form.get('kecamatan'), 
-                desa_binaan=request.form.get('desa_binaan'), no_hp=request.form.get('no_hp'), 
-                tmt_pangkat=tmt, tgl_lahir=lahir
-            )
-            db.session.add(baru)
-            db.session.commit()
-            flash(f"Data {baru.nama} Berhasil Disimpan!", "success")
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Gagal Simpan: {str(e)}", "danger")
-    return redirect(url_for('dashboard')) # Kembali ke dashboard setelah tambah
-
-@app.route('/hapus_pegawai/<int:id>')
-def hapus_pegawai(id):
-    if session.get('user_role') == 'admin':
-        p = Pegawai.query.get(id)
-        if p:
-            db.session.delete(p)
-            db.session.commit()
-            flash("Pegawai Berhasil Dihapus!", "warning")
-    return redirect(url_for('dashboard'))
-
-# --- FITUR LOKER DIGITAL (Hanya untuk PLKB) ---
+# --- FITUR LOKER (HANYA UNTUK PLKB) ---
 @app.route('/berkas_saya')
 def berkas_saya():
-    if session.get('user_role') != 'plkb': return redirect(url_for('dashboard'))
+    if session.get('user_role') != 'plkb': 
+        flash("Akses khusus PLKB!", "danger")
+        return redirect(url_for('dashboard'))
+        
     user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
     folder_user = os.path.join(app.config['BERKAS_PEGAWAI'], session['user_nip'])
     os.makedirs(folder_user, exist_ok=True)
     files = os.listdir(folder_user)
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
+    
     return render_template('berkas_plkb.html', role='plkb', user_data=user_data, files=files, info_terkini=info_list)
 
 @app.route('/upload_dokumen', methods=['POST'])
@@ -180,14 +149,26 @@ def chat_info():
     read_data = {info.id: LogBaca.query.filter_by(pengumuman_id=info.id).all() for info in info_list} if role == 'admin' else {}
     return render_template('chat_info.html', role=role, user_data=user_data, info_terkini=info_list, read_data=read_data, today=date.today())
 
-@app.route('/export_excel')
-def export_excel():
+# --- MANAJEMEN PEGAWAI (ADMIN ONLY) ---
+@app.route('/tambah_pegawai', methods=['POST'])
+def tambah_pegawai():
     if session.get('user_role') == 'admin':
-        pegawai = Pegawai.query.all()
-        data_excel = [{'NIP': p.nip, 'Nama': p.nama, 'Status': p.jenis_pegawai, 'Gol/Pangkat': p.pangkat_gol, 'Jabatan': p.jabatan, 'Kecamatan': p.kecamatan, 'Desa Binaan': p.desa_binaan, 'No HP': p.no_hp, 'TMT Pangkat': p.tmt_pangkat, 'Tgl Lahir': p.tgl_lahir} for p in pegawai]
-        f_path = '/tmp/Laporan_Kepegawaian.xlsx'
-        pd.DataFrame(data_excel).to_excel(f_path, index=False)
-        return send_file(f_path, as_attachment=True)
+        try:
+            tmt = datetime.strptime(request.form.get('tmt'), '%Y-%m-%d').date() if request.form.get('tmt') else None
+            lahir = datetime.strptime(request.form.get('lahir'), '%Y-%m-%d').date() if request.form.get('lahir') else None
+            baru = Pegawai(
+                nip=request.form.get('nip'), nama=request.form.get('nama'), 
+                jabatan=request.form.get('jabatan'), jenis_pegawai=request.form.get('jenis_pegawai'),
+                pangkat_gol=request.form.get('pangkat_gol'), kecamatan=request.form.get('kecamatan'), 
+                desa_binaan=request.form.get('desa_binaan'), no_hp=request.form.get('no_hp'), 
+                tmt_pangkat=tmt, tgl_lahir=lahir
+            )
+            db.session.add(baru)
+            db.session.commit()
+            flash(f"Data {baru.nama} Berhasil Disimpan!", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Gagal Simpan: {str(e)}", "danger")
     return redirect(url_for('dashboard'))
 
 @app.route('/logout')
