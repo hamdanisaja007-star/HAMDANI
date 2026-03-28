@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-# Gunakan timezone lokal jika perlu, default menggunakan datetime.now
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
@@ -10,18 +9,13 @@ app = Flask(__name__)
 app.secret_key = "dhede_bimz_final_full_2026_secure"
 
 # --- KONFIGURASI DATABASE & FOLDER ---
-# Menggunakan /tmp/ agar kompatibel dengan beberapa layanan hosting (seperti Vercel/PythonAnywhere)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/kepegawaian.db'
 app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
-app.config['CHAT_UPLOAD'] = '/tmp/chat_files'
-app.config['LOKER_PLKB'] = '/tmp/loker_plkb'  # Folder arsip mandiri PLKB
+app.config['CHAT_UPLOAD'] = '/tmp/chat_files'  # Folder lampiran chat
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan semua folder penyimpanan tersedia
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Pastikan folder tersedia
 os.makedirs(app.config['CHAT_UPLOAD'], exist_ok=True)
-os.makedirs(app.config['LOKER_PLKB'], exist_ok=True)
-
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'docx', 'xlsx'}
 
 def allowed_file(filename):
@@ -49,6 +43,7 @@ class Pengumuman(db.Model):
     file_lampiran = db.Column(db.String(200), nullable=True)
     admin_name = db.Column(db.String(50), default="Admin Kabupaten")
     tanggal = db.Column(db.DateTime, default=datetime.now)
+    # Tambahan relasi agar saat hapus pengumuman, log pembacanya ikut terhapus
     logs = db.relationship('LogBaca', backref='pengumuman', cascade="all, delete-orphan")
 
 class LogBaca(db.Model):
@@ -58,7 +53,11 @@ class LogBaca(db.Model):
     nama_pembaca = db.Column(db.String(100))
     waktu_baca = db.Column(db.DateTime, default=datetime.now)
 
-# --- ROUTES AUTENTIKASI ---
+class BankSoal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pertanyaan = db.Column(db.Text, nullable=False)
+
+# --- ROUTES ---
 
 @app.route('/')
 def landing():
@@ -69,29 +68,25 @@ def landing():
 def auth():
     user_in = request.form.get('username')
     pass_in = request.form.get('password')
-    
-    # Login Admin
     if user_in == "admin" and pass_in == "admin123":
         session['user_role'] = 'admin'
         return redirect(url_for('dashboard'))
-    
-    # Login PLKB via NIP
     user_plkb = Pegawai.query.filter_by(nip=user_in).first()
     if user_plkb:
         session['user_role'] = 'plkb'
         session['user_nip'] = user_in
         return redirect(url_for('dashboard'))
-        
     flash("Akses Ditolak! NIP atau Password Salah.", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD UTAMA ---
+# --- DASHBOARD (Statistik) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
     pegawai_list = Pegawai.query.all()
+    
     info_list = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(3).all()
     
     notif_pangkat = []
@@ -101,10 +96,8 @@ def dashboard():
     if role == 'admin':
         for p in pegawai_list:
             if p.jenis_pegawai == 'PNS' and p.tmt_pangkat:
-                # Logika notifikasi naik pangkat (kira-kira 4 tahun / 1370 hari)
                 if (today - p.tmt_pangkat).days >= 1370: notif_pangkat.append(p.nama)
-            # Logika pensiun (usia 58 tahun / 21170 hari)
-            if p.tgl_lahir and (today - p.tgl_lahir).days >= 21170:
+            if p.tgl_lahir and (today - p.tgl_lahir).days >= 20805:
                 notif_pensiun.append(p.nama)
     else:
         user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
@@ -114,44 +107,7 @@ def dashboard():
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun,
                            info_terkini=info_list)
 
-# --- FITUR LOKER DIGITAL (KHUSUS PLKB) ---
-@app.route('/berkas_saya')
-def berkas_saya():
-    if session.get('user_role') != 'plkb': return redirect(url_for('dashboard'))
-    
-    user_nip = session['user_nip']
-    user_data = Pegawai.query.filter_by(nip=user_nip).first()
-    
-    # Buat folder khusus per NIP
-    path_user = os.path.join(app.config['LOKER_PLKB'], user_nip)
-    os.makedirs(path_user, exist_ok=True)
-    
-    # Ambil list berkas yang sudah ada
-    files = os.listdir(path_user)
-    
-    return render_template('berkas_plkb.html', role='plkb', user_data=user_data, files=files)
-
-@app.route('/upload_dokumen', methods=['POST'])
-def upload_dokumen():
-    if session.get('user_role') == 'plkb':
-        user_nip = session['user_nip']
-        file = request.files.get('file_berkas') # Sinkron dengan name="file_berkas" di HTML
-        kategori = request.form.get('kategori')
-        
-        if file and allowed_file(file.filename):
-            ext = file.filename.rsplit('.', 1)[1].lower()
-            # Nama file format: Kategori_NIP_Timestamp.ext
-            filename = f"{kategori}_{user_nip}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}"
-            
-            path_user = os.path.join(app.config['LOKER_PLKB'], user_nip)
-            file.save(os.path.join(path_user, filename))
-            flash(f"Berkas {kategori} berhasil disimpan ke server!", "success")
-        else:
-            flash("Gagal! Format file tidak didukung.", "danger")
-            
-    return redirect(url_for('berkas_saya'))
-
-# --- KOMUNIKASI & CHAT INFO ---
+# --- HALAMAN CHAT / INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -185,6 +141,7 @@ def kirim_pengumuman():
         pesan = request.form.get('isi_pengumuman')
         file = request.files.get('lampiran')
         filename = None
+        
         if file and allowed_file(file.filename):
             orig_filename = secure_filename(file.filename)
             filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{orig_filename}"
@@ -202,15 +159,22 @@ def hapus_pengumuman(id):
     if session.get('user_role') == 'admin':
         info = Pengumuman.query.get(id)
         if info:
+            # Hapus file fisik jika ada lampiran
             if info.file_lampiran:
                 file_path = os.path.join(app.config['CHAT_UPLOAD'], info.file_lampiran)
-                if os.path.exists(file_path): os.remove(file_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            
             db.session.delete(info)
             db.session.commit()
             flash("Informasi berhasil dihapus!", "warning")
     return redirect(url_for('chat_info'))
 
-# --- MANAJEMEN DATA PEGAWAI (ADMIN ONLY) ---
+@app.route('/download_chat/<filename>')
+def download_chat(filename):
+    return send_from_directory(app.config['CHAT_UPLOAD'], filename)
+
+# --- DATA PEGAWAI ---
 @app.route('/data_pegawai')
 def data_pegawai():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -253,15 +217,27 @@ def hapus_pegawai(id):
             flash("Pegawai Berhasil Dihapus!", "warning")
     return redirect(url_for('data_pegawai'))
 
+@app.route('/export_excel')
+def export_excel():
+    pegawai = Pegawai.query.all()
+    data_excel = [{
+        'NIP': p.nip, 'Nama': p.nama, 'Status': p.jenis_pegawai,
+        'Gol/Pangkat': p.pangkat_gol, 'Jabatan': p.jabatan, 
+        'Kecamatan': p.kecamatan, 'Desa Binaan': p.desa_binaan,
+        'No HP': p.no_hp, 'TMT Pangkat': p.tmt_pangkat, 'Tgl Lahir': p.tgl_lahir
+    } for p in pegawai]
+    df = pd.DataFrame(data_excel)
+    f_path = '/tmp/Laporan_Kepegawaian.xlsx'
+    df.to_excel(f_path, index=False)
+    return send_file(f_path, as_attachment=True)
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('landing'))
 
-# --- INISIALISASI DATABASE ---
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    # Gunakan debug=True selama masa pengembangan
     app.run(debug=True)
