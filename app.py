@@ -55,7 +55,7 @@ class LogBaca(db.Model):
     nama_pembaca = db.Column(db.String(100))
     waktu_baca = db.Column(db.DateTime, default=datetime.now)
 
-# --- MIDDLEWARE: Inject User ke semua halaman ---
+# --- MIDDLEWARE ---
 @app.context_processor
 def inject_user():
     user_data = None
@@ -72,34 +72,30 @@ def landing():
 @app.route('/login', methods=['POST'])
 def auth():
     u, p = request.form.get('username'), request.form.get('password')
-    # Login Admin
     if u == "admin" and p == "admin123":
         session.clear()
         session['user_role'] = 'admin'
         return redirect(url_for('dashboard'))
-    # Login PLKB
+    
     user = Pegawai.query.filter_by(nip=u).first()
     if user:
         session.clear()
         session['user_role'] = 'plkb'
         session['user_nip'] = u
         return redirect(url_for('dashboard'))
-    flash("Login Gagal!", "danger")
+    
+    flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
-    
     role = session['user_role']
     pegawai = Pegawai.query.all()
     info = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).limit(5).all()
     
-    # Hitung Notifikasi untuk Dashboard (Agar tidak Error 500)
-    notif_pangkat = []
-    notif_pensiun = []
+    notif_pangkat, notif_pensiun = [], []
     today = date.today()
-    
     if role == 'admin':
         for p in pegawai:
             if p.jenis_pegawai == 'PNS' and p.tmt_pangkat:
@@ -107,14 +103,42 @@ def dashboard():
             if p.tgl_lahir:
                 if (today - p.tgl_lahir).days >= 21170: notif_pensiun.append(p)
 
-    # Perhatikan: Memanggil index.html (sesuai file di github Bapak)
-    return render_template('index.html', 
-                           pegawai=pegawai, 
-                           info_terkini=info, 
-                           role=role,
-                           notif_pangkat=notif_pangkat, 
-                           notif_pensiun=notif_pensiun)
+    return render_template('index.html', pegawai=pegawai, info_terkini=info, role=role, 
+                           notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun)
 
+# --- FITUR MANAJEMEN PEGAWAI (SOLUSI ERROR 404) ---
+@app.route('/data_pegawai', methods=['GET', 'POST'])
+def data_pegawai():
+    if session.get('user_role') != 'admin': return redirect(url_for('landing'))
+    
+    if request.method == 'POST':
+        nip = request.form.get('nip')
+        nama = request.form.get('nama')
+        # Tambah data sederhana
+        if not Pegawai.query.filter_by(nip=nip).first():
+            db.session.add(Pegawai(nip=nip, nama=nama, 
+                                   jabatan=request.form.get('jabatan'),
+                                   jenis_pegawai=request.form.get('jenis_pegawai'),
+                                   pangkat_gol=request.form.get('pangkat_gol')))
+            db.session.commit()
+            flash("Pegawai Berhasil Ditambahkan!", "success")
+        else:
+            flash("NIP Sudah Ada!", "warning")
+            
+    list_pegawai = Pegawai.query.all()
+    return render_template('data_pegawai.html', pegawai=list_pegawai)
+
+@app.route('/hapus_pegawai/<int:id>')
+def hapus_pegawai(id):
+    if session.get('user_role') == 'admin':
+        p = Pegawai.query.get(id)
+        if p:
+            db.session.delete(p)
+            db.session.commit()
+            flash("Data Terhapus!", "info")
+    return redirect(url_for('data_pegawai'))
+
+# --- SIDEBAR LAINNYA ---
 @app.route('/profil')
 def profil():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -140,7 +164,7 @@ def simpan_berkas():
         target = os.path.join(app.config['UPLOAD_FOLDER'], user_nip)
         os.makedirs(target, exist_ok=True)
         file.save(os.path.join(target, fname))
-        flash("Berkas Berhasil Terkirim ke Admin!", "success")
+        flash("Berkas Berhasil Terkirim!", "success")
     return redirect(url_for('berkas_saya'))
 
 @app.route('/admin/berkas_masuk')
@@ -153,12 +177,7 @@ def berkas_masuk():
             p_path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
             if os.path.isdir(p_path):
                 for f in os.listdir(p_path):
-                    list_masuk.append({
-                        'nama': p.nama if p else nip, 
-                        'nip': nip, 
-                        'file': f, 
-                        'kat': f.split('_')[0]
-                    })
+                    list_masuk.append({'nama': p.nama if p else nip, 'nip': nip, 'file': f, 'kat': f.split('_')[0]})
     return render_template('admin_berkas.html', data=list_masuk)
 
 @app.route('/chat_info')
@@ -166,7 +185,6 @@ def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     info = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
-    
     if role == 'plkb':
         user = Pegawai.query.filter_by(nip=session['user_nip']).first()
         if user:
@@ -174,15 +192,13 @@ def chat_info():
                 if not LogBaca.query.filter_by(pengumuman_id=i.id, nip_pembaca=user.nip).first():
                     db.session.add(LogBaca(pengumuman_id=i.id, nip_pembaca=user.nip, nama_pembaca=user.nama))
             db.session.commit()
-    
     logs = {i.id: LogBaca.query.filter_by(pengumuman_id=i.id).all() for i in info} if role == 'admin' else {}
     return render_template('chat_info.html', info_terkini=info, logs=logs, role=role)
 
 @app.route('/kirim_info', methods=['POST'])
 def kirim_info():
     if session.get('user_role') == 'admin':
-        pesan = request.form.get('isi')
-        file = request.files.get('lampiran')
+        pesan, file = request.form.get('isi'), request.files.get('lampiran')
         fname = None
         if file and file.filename != '':
             fname = secure_filename(file.filename)
