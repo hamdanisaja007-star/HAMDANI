@@ -3,47 +3,78 @@
 {% block content %}
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold"><i class="fas fa-users me-2 text-info"></i>Daftar PLKB Kabupaten Sukabumi</h3>
-        <button class="btn btn-info text-white shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalTambah">
-            <i class="fas fa-plus-circle me-1"></i> Tambah Anggota
+        <div>
+            <h3 class="fw-bold mb-0 text-dark"><i class="fas fa-users-cog me-2 text-info"></i>Manajemen Data PLKB</h3>
+            <p class="text-muted small">Kelola akun login dan informasi dasar petugas lapangan.</p>
+        </div>
+        <button class="btn btn-info text-white shadow-sm rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambah">
+            <i class="fas fa-user-plus me-1"></i> Daftarkan PLKB
         </button>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} border-0 shadow-sm alert-dismissible fade show mb-4 rounded-3">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">NAMA / NIP</th>
-                        <th>JABATAN</th>
-                        <th>GOL</th>
-                        <th>STATUS</th>
-                        <th class="text-center">AKSI</th>
+                    <tr class="text-secondary small">
+                        <th class="ps-4 py-3">NAMA & NIP</th>
+                        <th class="py-3">STATUS/GOL</th>
+                        <th class="py-3">WILAYAH TUGAS</th>
+                        <th class="py-3">JABATAN</th>
+                        <th class="text-center py-3">AKSI</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for p in pegawai %}
                     <tr>
                         <td class="ps-4">
-                            <div class="fw-bold text-dark">{{ p.nama }}</div>
-                            <small class="text-muted">{{ p.nip }}</small>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-circle p-2 me-3 text-center" style="width: 40px;">
+                                    <i class="fas fa-user text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ p.nama }}</div>
+                                    <small class="text-muted font-monospace">{{ p.nip }}</small>
+                                </div>
+                            </div>
                         </td>
-                        <td><small>{{ p.jabatan }}</small></td>
-                        <td>{{ p.pangkat_gol }}</td>
                         <td>
-                            <span class="badge {% if p.jenis_pegawai == 'PNS' %}bg-primary{% else %}bg-success{% endif %}">
+                            <span class="badge {% if p.jenis_pegawai == 'PNS' %}bg-primary{% else %}bg-success{% endif %} rounded-pill mb-1">
                                 {{ p.jenis_pegawai }}
                             </span>
+                            <div class="small fw-bold text-muted">{{ p.pangkat_gol or '-' }}</div>
                         </td>
+                        <td>
+                            <div class="small"><i class="fas fa-map-marker-alt text-danger me-1"></i> Kec. {{ p.kecamatan or '-' }}</div>
+                            <div class="small text-muted"><i class="fas fa-home text-muted me-1"></i> Desa {{ p.desa_binaan or '-' }}</div>
+                        </td>
+                        <td><span class="small text-dark">{{ p.jabatan or '-' }}</span></td>
                         <td class="text-center">
-                            <a href="/hapus_pegawai/{{ p.id }}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Hapus data {{ p.nama }}?')">
-                                <i class="fas fa-trash"></i>
-                            </a>
+                            <div class="btn-group">
+                                <a href="/hapus_pegawai/{{ p.id }}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" 
+                                   onclick="return confirm('PENTING: Menghapus {{ p.nama }} akan menghapus seluruh data dan berkasnya. Lanjutkan?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">Data masih kosong. Klik Tambah Anggota.</td>
+                        <td colspan="5" class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-light mb-3"></i>
+                            <p class="text-muted">Belum ada PLKB yang terdaftar di database.</p>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -53,41 +84,45 @@
 </div>
 
 <div class="modal fade" id="modalTambah" tabindex="-1">
-    <div class="modal-dialog">
-        <form action="/data_pegawai" method="POST" class="modal-content border-0 rounded-4 shadow">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title">Input Data PLKB Baru</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="/data_pegawai" method="POST" class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header bg-dark text-white p-4">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-info"></i>Registrasi PLKB Baru</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="mb-3">
-                    <label class="small fw-bold">NIP (Username Login)</label>
-                    <input type="text" name="nip" class="form-control" required>
+            <div class="modal-body p-4 bg-light">
+                <div class="alert alert-info border-0 small mb-4">
+                    <i class="fas fa-info-circle me-1"></i> Admin cukup isi data dasar. Data teknis (TMT & Tgl Lahir) akan dilengkapi oleh PLKB secara mandiri.
                 </div>
+                
                 <div class="mb-3">
-                    <label class="small fw-bold">Nama Lengkap</label>
-                    <input type="text" name="nama" class="form-control" required>
+                    <label class="small fw-bold text-dark">NIP (Sekaligus Username Login)</label>
+                    <input type="text" name="nip" class="form-control border-0 shadow-sm" placeholder="Contoh: 19820406XXXXXXXX" required>
                 </div>
+                
                 <div class="mb-3">
-                    <label class="small fw-bold">Jabatan</label>
-                    <input type="text" name="jabatan" class="form-control">
+                    <label class="small fw-bold text-dark">Nama Lengkap (Tanpa Gelar)</label>
+                    <input type="text" name="nama" class="form-control border-0 shadow-sm" placeholder="Masukkan nama lengkap" required>
                 </div>
+
                 <div class="row">
-                    <div class="col-6 mb-3">
-                        <label class="small fw-bold">Golongan</label>
-                        <input type="text" name="pangkat_gol" class="form-control" placeholder="III/c">
-                    </div>
-                    <div class="col-6 mb-3">
-                        <label class="small fw-bold">Status</label>
-                        <select name="jenis_pegawai" class="form-select">
-                            <option value="PNS">PNS</option>
-                            <option value="PPPK">PPPK</option>
+                    <div class="col-12 mb-3">
+                        <label class="small fw-bold text-dark">Status Kepegawaian</label>
+                        <select name="jenis_pegawai" class="form-select border-0 shadow-sm">
+                            <option value="PNS">PNS (Pegawai Negeri Sipil)</option>
+                            <option value="PPPK">PPPK (P3K)</option>
                         </select>
                     </div>
                 </div>
+                
+                <div class="p-3 bg-white rounded-3 border">
+                    <p class="small text-muted mb-0"><i class="fas fa-lock me-1"></i> Password default saat ini adalah <strong>NIP</strong> masing-masing.</p>
+                </div>
             </div>
-            <div class="modal-footer border-0">
-                <button type="submit" class="btn btn-info w-100 text-white fw-bold">SIMPAN DATA</button>
+            <div class="modal-footer border-0 bg-light p-4 pt-0">
+                <button type="submit" class="btn btn-info w-100 text-white fw-bold py-3 rounded-3 shadow">
+                    <i class="fas fa-save me-2"></i>SIMPAN & DAFTARKAN
+                </button>
             </div>
         </form>
     </div>
