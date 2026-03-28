@@ -72,12 +72,12 @@ def auth():
     user_in = request.form.get('username')
     pass_in = request.form.get('password')
     
-    # Login Admin
+    # Login Admin Kabupaten
     if user_in == "admin" and pass_in == "admin123":
         session['user_role'] = 'admin'
         return redirect(url_for('dashboard'))
     
-    # Login PLKB via NIP
+    # Login PLKB via NIP (Tanpa password untuk kemudahan akses lapangan)
     user_plkb = Pegawai.query.filter_by(nip=user_in).first()
     if user_plkb:
         session['user_role'] = 'plkb'
@@ -165,8 +165,11 @@ def hapus_pengumuman(id):
 def berkas_saya():
     if session.get('user_role') != 'plkb': return redirect(url_for('landing'))
     user_data = Pegawai.query.filter_by(nip=session['user_nip']).first()
+    
+    # Ambil list file yang sudah diupload ke folder NIP masing-masing
     folder_user = os.path.join(app.config['BERKAS_PEGAWAI'], session['user_nip'])
     files = os.listdir(folder_user) if os.path.exists(folder_user) else []
+    
     return render_template('berkas_plkb.html', role='plkb', user_data=user_data, files=files)
 
 @app.route('/upload_dokumen', methods=['POST'])
@@ -178,6 +181,8 @@ def upload_dokumen():
             user_nip = session['user_nip']
             folder_user = os.path.join(app.config['BERKAS_PEGAWAI'], user_nip)
             os.makedirs(folder_user, exist_ok=True)
+            
+            # Format: KATEGORI_NIP_NAMAFILE.ext
             filename = f"{kategori.replace(' ', '_')}_{user_nip}_{secure_filename(file.filename)}"
             file.save(os.path.join(folder_user, filename))
             flash(f"Berkas {kategori} Berhasil Diupload!", "success")
@@ -241,6 +246,7 @@ def logout():
     session.clear()
     return redirect(url_for('landing'))
 
+# --- INITIALIZE DATABASE ---
 with app.app_context():
     db.create_all()
 
