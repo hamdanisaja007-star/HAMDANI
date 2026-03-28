@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOKER DIGITAL | SIDALAP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-blue: #00d2ff; --deep-blue: #004e92; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { background: #1a1a1a; min-height: 100vh; position: sticky; top: 0; }
+        .nav-link { color: #888; transition: 0.3s; margin: 5px 15px; padding: 12px; border-radius: 12px; display: flex; align-items: center; text-decoration: none; }
+        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, var(--primary-blue), var(--deep-blue)); }
+        .nav-label { font-size: 0.7rem; color: #555; text-transform: uppercase; padding: 20px 25px 5px; font-weight: 800; }
+        .glass-header { background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%); border-radius: 20px; padding: 30px; color: white; margin-bottom: 30px; }
+        .folder-card { border: none; border-radius: 20px; transition: 0.3s; cursor: pointer; background: white; }
+        .folder-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 d-none d-md-block sidebar p-0 text-center text-white">
+            <div class="py-5"><i class="fas fa-robot fa-3x text-info mb-2"></i><h4 class="fw-bold">SIDALAP</h4></div>
+            <div class="text-start">
+                <div class="nav-label">Menu Utama</div>
+                <a class="nav-link" href="/dashboard"><i class="fas fa-th-large me-2"></i> Dashboard</a>
+                <a class="nav-link active" href="/berkas_saya"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a>
+                <div class="nav-label">Komunikasi</div>
+                <a class="nav-link" href="/chat_info"><i class="fas fa-comment-alt me-2"></i> Chat / Info</a>
+                <div class="nav-label">Sistem</div>
+                <a class="nav-link text-danger" href="/logout"><i class="fas fa-power-off me-2"></i> Logout</a>
+            </div>
+        </div>
+
+        <div class="col-md-10 p-4">
+            <div class="glass-header shadow">
+                <h2 class="fw-bold mb-1">Loker Dokumen Digital</h2>
+                <p class="mb-0 opacity-75">Status Pegawai: <span class="badge bg-white text-dark">{{ user_data.jenis_pegawai }}</span></p>
+            </div>
+
+            <div class="row g-4">
+                {% if user_data.jenis_pegawai == 'PNS' %}
+                    {% set folders = [('Umum', 'fa-file-alt'), ('Kenaikan Pangkat', 'fa-arrow-circle-up'), ('Pensiun', 'fa-blind'), ('Jabatan', 'fa-briefcase')] %}
+                {% else %}
+                    {% set folders = [('Umum', 'fa-file-alt'), ('Perpanjangan Kontrak', 'fa-file-contract')] %}
+                {% endif %}
+
+                {% for name, icon in folders %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="folder-card p-4 text-center shadow-sm" data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}">
+                        <div class="mb-3 text-info"><i class="fas {{ icon }} fa-3x"></i></div>
+                        <h6 class="fw-bold mb-1 text-dark">{{ name }}</h6>
+                        <small class="text-muted">Klik untuk upload</small>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modal-{{ loop.index }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form action="/upload_dokumen" method="POST" enctype="multipart/form-data" class="modal-content border-0 rounded-4 shadow">
+                            <div class="modal-header bg-info text-white border-0">
+                                <h5 class="modal-title fw-bold">Upload Berkas {{ name }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <input type="hidden" name="kategori" value="{{ name }}">
+                                <div class="text-center mb-3 text-light"><i class="fas {{ icon }} fa-4x"></i></div>
+                                <label class="form-label small fw-bold">Pilih File (PDF/JPG)</label>
+                                <input type="file" name="file_berkas" class="form-control" required>
+                                <div class="mt-2 small text-muted text-center italic">Pastikan dokumen terbaca jelas</div>
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="submit" class="btn btn-info w-100 text-white fw-bold py-2 rounded-pill shadow">SIMPAN KE SERVER</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-5">
+                <h5 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Berkas yang Telah Diupload</h5>
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Nama File</th>
+                                    <th>Kategori</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for f in files %}
+                                <tr>
+                                    <td class="ps-4 small text-truncate" style="max-width: 300px;">{{ f }}</td>
+                                    <td><span class="badge bg-info-subtle text-info border border-info px-2">{{ f.split('_')[0] }}</span></td>
+                                    <td class="text-center"><i class="fas fa-check-circle text-success"></i> Aman</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not files %}
+                                <tr><td colspan="3" class="text-center py-4 text-muted small">Belum ada berkas di server.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
