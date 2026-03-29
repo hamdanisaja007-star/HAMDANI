@@ -45,6 +45,11 @@
                     <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/upload_berkas' }}" href="/upload_berkas"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
                     <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.path == '/toko' }}" href="/toko">
+                        <i class="fas fa-shopping-bag me-2 text-warning"></i> SIDALAP Mart
+                    </a>
+                </li>
             </ul>
 
             {% if session['user_role'] != 'admin' %}
@@ -60,7 +65,7 @@
                         <i class="fas fa-database me-2 text-success"></i> New SIGA
                     </a>
                 </li>
-                </ul>
+            </ul>
             {% endif %}
 
             <ul class="nav flex-column mt-auto mb-3">
@@ -101,39 +106,50 @@
 
             <div class="row mb-4">
                 {% if session['user_role'] == 'admin' %}
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-info border-5 shadow-sm">
                             <div class="d-flex align-items-center">
                                 <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
                                 <div>
-                                    <h6 class="text-muted mb-0 small text-uppercase">Total Pegawai</h6>
-                                    <h3 class="fw-bold mb-0">{{ pegawai|length if pegawai else 0 }}</h3>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Total PLKB</h6>
+                                    <h3 class="fw-bold mb-0">{{ stat.total }}</h3>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-warning border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePangkat">
                             <div class="d-flex align-items-center">
                                 <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
                                 <div>
                                     <h6 class="text-muted mb-0 small text-uppercase">Naik Pangkat</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length if notif_pangkat else 0 }}</h3>
-                                    <small class="text-warning fw-bold">Klik untuk rincian</small>
+                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-danger border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePensiun">
                             <div class="d-flex align-items-center">
                                 <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
                                 <div>
                                     <h6 class="text-muted mb-0 small text-uppercase">Jelang Pensiun</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length if notif_pensiun else 0 }}</h3>
-                                    <small class="text-danger fw-bold">Klik untuk rincian</small>
+                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card stat-card bg-white p-4 border-start border-success border-5 shadow-sm pointer" onclick="window.location.href='/toko'">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success text-white p-3 rounded-circle me-3"><i class="fas fa-store fa-2x"></i></div>
+                                <div>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Produk Toko</h6>
+                                    <h3 class="fw-bold mb-0">Cek Toko</h3>
+                                    <small class="text-success fw-bold">SIDALAP Mart</small>
                                 </div>
                             </div>
                         </div>
@@ -229,9 +245,7 @@
                     <hr class="w-25 border-info border-2">
                     <div class="d-flex gap-3">
                         <a href="/chat_info" class="btn btn-info fw-bold px-4 shadow text-white rounded-pill">PENGUMUMAN <i class="fas fa-bell ms-2"></i></a>
-                        {% if session['user_role'] != 'admin' %}
-                        <a href="/upload_berkas" class="btn btn-outline-light fw-bold px-4 rounded-pill">KIRIM BERKAS <i class="fas fa-upload ms-2"></i></a>
-                        {% endif %}
+                        <a href="/toko" class="btn btn-warning fw-bold px-4 shadow text-dark rounded-pill">SIDALAP MART <i class="fas fa-shopping-cart ms-2"></i></a>
                     </div>
                 </div>
                 <i class="fas fa-shield-alt position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
