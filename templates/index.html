@@ -26,7 +26,7 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-2 d-none d-md-block sidebar p-0">
+        <div class="col-md-2 d-none d-md-block sidebar p-0 d-flex flex-column">
             <div class="sidebar-header">
                 <i class="fas fa-robot fa-3x text-info mb-2"></i>
                 <h5 class="fw-bold text-info mb-0">SIDALAP <span class="small text-white opacity-50">v2</span></h5>
@@ -45,7 +45,26 @@
                     <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/upload_berkas' }}" href="/upload_berkas"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
                     <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
                 {% endif %}
-                <li class="nav-item mt-4"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
+            </ul>
+
+            {% if session['user_role'] != 'admin' %}
+            <div class="nav-label">Link Pekerjaan</div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="https://kinerja.bkn.go.id/login" target="_blank">
+                        <i class="fas fa-external-link-alt me-2 text-warning"></i> E-Kinerja BKN
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank">
+                        <i class="fas fa-database me-2 text-success"></i> New SIGA
+                    </a>
+                </li>
+                </ul>
+            {% endif %}
+
+            <ul class="nav flex-column mt-auto mb-3">
+                <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
             </ul>
         </div>
 
@@ -150,7 +169,7 @@
                 <div class="collapse mb-4" id="collapsePangkat">
                     <div class="card border-0 shadow rounded-4 overflow-hidden">
                         <div class="card-header bg-warning text-dark fw-bold py-3">
-                            <i class="fas fa-medal me-2"></i>Daftar Usulan Naik Pangkat (4 Tahunan)
+                            <i class="fas fa-medal me-2"></i>Daftar Usulan Naik Pangkat
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0 align-middle">
