@@ -41,7 +41,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 p-3 pt-0">
-                    <a href="https://wa.me/{{ p.wa_penjual }}?text=Halo%20{{ p.nama_penjual }},%20saya%20tertarik%20dengan%20produk%20{{ p.nama_barang }}%20di%20SIDALAP%20Mart." 
+                    <a href="https://wa.me/{{ p.wa_penjual|replace('08', '628', 1) }}?text=Halo%20{{ p.nama_penjual }},%20saya%20tertarik%20dengan%20produk%20{{ p.nama_barang }}%20di%20SIDALAP%20Mart." 
                        target="_blank" class="btn btn-outline-success w-100 fw-bold rounded-pill">
                         <i class="fab fa-whatsapp me-2"></i>Hubungi Penjual
                     </a>
@@ -75,12 +75,16 @@
                         <input type="text" name="harga" class="form-control rounded-3" placeholder="Contoh: 50.000" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label small fw-bold">Nomor WhatsApp (Aktif)</label>
+                        <input type="text" name="wa_penjual" class="form-control rounded-3" placeholder="Contoh: 08123456789" required>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label small fw-bold">Deskripsi Barang</label>
                         <textarea name="deskripsi" class="form-control rounded-3" rows="3" placeholder="Jelaskan detail barang Anda..." required></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Foto Produk</label>
-                        <input type="file" name="foto" class="form-control rounded-3" accept="image/*" required>
+                        <input type="file" name="foto_produk" class="form-control rounded-3" accept="image/*" required>
                         <small class="text-muted">Gunakan foto yang jelas agar cepat laku.</small>
                     </div>
                 </div>
