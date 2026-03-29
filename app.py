@@ -8,6 +8,7 @@ app = Flask(__name__)
 app.secret_key = "sidallap_sukabumi_2026_secure"
 
 # --- KONFIGURASI (Vercel & Local) ---
+# Menggunakan /tmp karena Vercel bersifat read-only di folder lain
 BASE_TMP = "/tmp"
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_TMP, "sidalap_v2.db")}'
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_TMP, 'loker_berkas')
@@ -16,7 +17,7 @@ app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
 app.config['PRODUK_UPLOAD'] = os.path.join(BASE_TMP, 'produk_foto')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan semua folder sistem siap
+# Pastikan semua folder sistem siap di memori sementara Vercel
 for folder in [app.config['UPLOAD_FOLDER'], app.config['CHAT_UPLOAD'], app.config['PROFIL_UPLOAD'], app.config['PRODUK_UPLOAD']]:
     os.makedirs(folder, exist_ok=True)
 
@@ -91,15 +92,20 @@ def landing():
 def auth():
     u = request.form.get('username', '').strip()
     p = request.form.get('password', '').strip()
+    
+    # Login Admin
     if u == "admin" and p == "admin123":
         session.clear()
         session.update({'user_role': 'admin', 'user_nip': 'ADMIN', 'user_id': 0})
         return redirect(url_for('dashboard'))
+    
+    # Login PLKB
     user = Pegawai.query.filter_by(nip=u).first()
     if user and p == user.nip:
         session.clear()
         session.update({'user_role': 'plkb', 'user_nip': user.nip, 'user_id': user.id})
         return redirect(url_for('dashboard'))
+    
     flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
@@ -123,10 +129,10 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
-# --- LOKER BERKAS (FIXED FOR UPLOAD.HTML) ---
-@app.route('/upload_berkas')
+# --- LOKER BERKAS (SANGAT PENTING) ---
+@app.route('/upload_berkas', methods=['GET'])
 def upload_berkas():
-    """Menampilkan halaman upload dan riwayat file"""
+    """Halaman Loker Berkas"""
     if 'user_nip' not in session: return redirect(url_for('landing'))
     nip = session['user_nip']
     user_files = []
@@ -137,7 +143,7 @@ def upload_berkas():
 
 @app.route('/simpan_berkas', methods=['POST'])
 def simpan_berkas():
-    """Proses simpan file dari form di upload.html"""
+    """Proses Simpan Berkas dari upload.html"""
     if 'user_nip' not in session: return redirect(url_for('landing'))
     file = request.files.get('file_berkas')
     kat = request.form.get('kategori', 'LAINNYA').upper()
@@ -146,79 +152,40 @@ def simpan_berkas():
     if file and allowed_file(file.filename):
         target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
         os.makedirs(target_dir, exist_ok=True)
-        # Format: KATEGORI_TANGGAL_NAMAFILE.ext
         fname = f"{kat}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
         file.save(os.path.join(target_dir, fname))
-        flash(f"Berkas {kat} Berhasil dikirim!", "success")
+        flash(f"Berkas {kat} Berhasil terkirim!", "success")
     else:
-        flash("Gagal upload! Pastikan file dipilih dan format sesuai (PDF/JPG/PNG).", "danger")
+        flash("Gagal! Pilih file format PDF/JPG/PNG.", "danger")
     
     return redirect(url_for('upload_berkas'))
 
 @app.route('/download/<nip>/<filename>')
 def download_file(nip, filename):
-    """Menampilkan/Download file dari riwayat"""
-    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
-    return send_from_directory(path, filename)
+    return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], nip), filename)
 
-# --- ADMIN: BERKAS MASUK ---
-@app.route('/admin/berkas_masuk')
-def berkas_masuk():
-    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
-    list_masuk = []
-    if os.path.exists(app.config['UPLOAD_FOLDER']):
-        for nip_f in os.listdir(app.config['UPLOAD_FOLDER']):
-            p = Pegawai.query.filter_by(nip=nip_f).first()
-            path = os.path.join(app.config['UPLOAD_FOLDER'], nip_f)
-            if os.path.isdir(path):
-                for fn in os.listdir(path):
-                    list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
-    return render_template('admin_berkas.html', data=list_masuk)
-
-# --- SIDALAP MART ---
+# --- TOKO & CHAT ---
 @app.route('/toko')
 def toko():
     if 'user_role' not in session: return redirect(url_for('landing'))
     semua_produk = Produk.query.order_by(Produk.tanggal_post.desc()).all()
     return render_template('toko.html', produk=semua_produk, role=session.get('user_role'))
 
-@app.route('/tambah_produk', methods=['POST'])
-def tambah_produk():
-    user = Pegawai.query.get(session.get('user_id')) if session.get('user_role') != 'admin' else None
-    file = request.files.get('foto')
-    fname = f"item_{datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-    if file: file.save(os.path.join(app.config['PRODUK_UPLOAD'], fname))
-    db.session.add(Produk(nama_barang=request.form.get('nama_barang'), harga=request.form.get('harga'), 
-                          deskripsi=request.form.get('deskripsi'), foto_produk=fname, penjual_id=session.get('user_id'),
-                          nama_penjual=user.nama if user else "ADMIN", wa_penjual=user.no_hp if user else "62812345678"))
-    db.session.commit()
-    flash("Produk diposting ke SIDALAP Mart!", "success")
-    return redirect(url_for('toko'))
-
-# --- CHAT & INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
     info = Pengumuman.query.order_by(Pengumuman.tanggal.desc()).all()
     msg = PesanChat.query.order_by(PesanChat.waktu.asc()).all()
-    logs = {i.id: LogBaca.query.filter_by(pengumuman_id=i.id).all() for i in info} if session['user_role'] == 'admin' else {}
-    return render_template('chat_info.html', info_terkini=info, logs=logs, role=session['user_role'], all_messages=msg)
+    return render_template('chat_info.html', info_terkini=info, role=session['user_role'], all_messages=msg)
 
 @app.route('/kirim_pesan', methods=['POST'])
 def kirim_pesan():
     user = Pegawai.query.get(session.get('user_id')) if session.get('user_role') != 'admin' else None
     db.session.add(PesanChat(user_id=session.get('user_id'), nama_pengirim=user.nama if user else "ADMIN", role=session.get('user_role'), isi_pesan=request.form.get('pesan')))
-    db.session.commit(); return redirect(url_for('chat_info'))
+    db.session.commit()
+    return redirect(url_for('chat_info'))
 
-# --- DATA PEGAWAI & PROFIL ---
-@app.route('/data_pegawai', methods=['GET', 'POST'])
-def data_pegawai():
-    if session.get('user_role') != 'admin': return redirect(url_for('landing'))
-    if request.method == 'POST':
-        db.session.add(Pegawai(nip=request.form.get('nip'), nama=request.form.get('nama'), jenis_pegawai=request.form.get('jenis_pegawai')))
-        db.session.commit()
-    return render_template('data_pegawai.html', pegawai=Pegawai.query.all())
-
+# --- PROFIL ---
 @app.route('/profil')
 def profil():
     if 'user_nip' not in session: return redirect(url_for('landing'))
@@ -241,16 +208,23 @@ def update_profil():
         flash("Profil berhasil diperbarui!", "success")
     return redirect(url_for('profil'))
 
-# --- FILE SERVING ---
+# --- FILE SERVING (FIXED 404) ---
 @app.route('/foto_profil/<filename>')
-def serve_foto(filename): return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
-
-@app.route('/produk_foto/<filename>')
-def serve_produk(filename): return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
+def serve_foto(filename):
+    # Cek apakah file ada di folder tmp, jika tidak arahkan ke default di static
+    file_path = os.path.join(app.config['PROFIL_UPLOAD'], filename)
+    if not os.path.exists(file_path):
+        return redirect(url_for('static', filename='images/default_user.png'))
+    return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
 
 @app.route('/logout')
-def logout(): session.clear(); return redirect(url_for('landing'))
+def logout(): 
+    session.clear()
+    return redirect(url_for('landing'))
 
-with app.app_context(): db.create_all()
+# --- DB INIT ---
+with app.app_context(): 
+    db.create_all()
 
-if __name__ == '__main__': app.run(debug=True)
+if __name__ == '__main__': 
+    app.run(debug=True)
