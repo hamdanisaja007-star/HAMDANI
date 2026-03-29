@@ -1,0 +1,95 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-shopping-cart text-warning me-2"></i>SIDALAP Mart</h3>
+            <p class="text-muted small">Wadah Ekonomi Kreatif PLKB Kabupaten Sukabumi</p>
+        </div>
+        {% if role != 'admin' %}
+        <button class="btn btn-warning fw-bold rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#modalTambah">
+            <i class="fas fa-plus-circle me-2"></i>Jual Barang
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% for p in produk %}
+        <div class="col-md-3 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 stat-card">
+                <img src="{{ url_for('serve_produk', filename=p.foto_produk) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ p.nama_barang }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark">{{ p.nama_barang }}</h5>
+                        <span class="badge bg-success small">Rp {{ p.harga }}</span>
+                    </div>
+                    <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ p.deskripsi }}
+                    </p>
+                    <hr class="opacity-50">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-user-circle text-info me-2"></i>
+                            <span class="small fw-bold">{{ p.nama_penjual }}</span>
+                        </div>
+                        {% if role == 'admin' or p.penjual_id == session['user_id'] %}
+                        <a href="{{ url_for('hapus_produk', id=p.id) }}" class="text-danger" onclick="return confirm('Hapus produk ini?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 p-3 pt-0">
+                    <a href="https://wa.me/{{ p.wa_penjual }}?text=Halo%20{{ p.nama_penjual }},%20saya%20tertarik%20dengan%20produk%20{{ p.nama_barang }}%20di%20SIDALAP%20Mart." 
+                       target="_blank" class="btn btn-outline-success w-100 fw-bold rounded-pill">
+                        <i class="fab fa-whatsapp me-2"></i>Hubungi Penjual
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="fas fa-store-slash fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">Belum ada barang yang dijual. Jadilah yang pertama!</h5>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalTambah" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header bg-warning text-dark border-0 rounded-top-4">
+                <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Pasang Iklan Barang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/tambah_produk" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nama Barang</label>
+                        <input type="text" name="nama_barang" class="form-control rounded-3" placeholder="Contoh: Madu Hutan Asli" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Harga (Rp)</label>
+                        <input type="text" name="harga" class="form-control rounded-3" placeholder="Contoh: 50.000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Deskripsi Barang</label>
+                        <textarea name="deskripsi" class="form-control rounded-3" rows="3" placeholder="Jelaskan detail barang Anda..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Foto Produk</label>
+                        <input type="file" name="foto" class="form-control rounded-3" accept="image/*" required>
+                        <small class="text-muted">Gunakan foto yang jelas agar cepat laku.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning fw-bold rounded-pill px-4 shadow-sm">Posting Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
