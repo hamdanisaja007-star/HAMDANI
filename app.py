@@ -232,6 +232,22 @@ def tambah_produk():
     flash("Produk berhasil diposting!", "success")
     return redirect(url_for('toko'))
 
+@app.route('/hapus_produk/<int:id>')
+def hapus_produk(id):
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    p = Produk.query.get(id)
+    if p:
+        # Opsional: Hapus file fisik jika ada
+        try:
+            file_path = os.path.join(app.config['PRODUK_UPLOAD'], p.foto_produk)
+            if os.path.exists(file_path) and p.foto_produk != 'default_produk.png':
+                os.remove(file_path)
+        except: pass
+        db.session.delete(p)
+        db.session.commit()
+        flash("Produk berhasil dihapus!", "success")
+    return redirect(url_for('toko'))
+
 @app.route('/produk_foto/<filename>')
 def serve_produk(filename):
     return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
