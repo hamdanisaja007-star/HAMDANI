@@ -103,7 +103,7 @@ def auth():
     flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD & UPLOAD BERKAS (SUDAH FIX METHOD) ---
+# --- DASHBOARD ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -123,21 +123,43 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
-@app.route('/upload_berkas', methods=['POST'])
+# --- LOKER BERKAS (FIXED FOR UPLOAD.HTML) ---
+@app.route('/upload_berkas')
 def upload_berkas():
+    """Menampilkan halaman upload dan riwayat file"""
+    if 'user_nip' not in session: return redirect(url_for('landing'))
+    nip = session['user_nip']
+    user_files = []
+    target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+    if os.path.exists(target_dir):
+        user_files = os.listdir(target_dir)
+    return render_template('upload.html', files=user_files)
+
+@app.route('/simpan_berkas', methods=['POST'])
+def simpan_berkas():
+    """Proses simpan file dari form di upload.html"""
     if 'user_nip' not in session: return redirect(url_for('landing'))
     file = request.files.get('file_berkas')
-    kat = request.form.get('kategori_berkas', 'LAINNYA').upper()
+    kat = request.form.get('kategori', 'LAINNYA').upper()
     nip = session['user_nip']
+    
     if file and allowed_file(file.filename):
         target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
         os.makedirs(target_dir, exist_ok=True)
+        # Format: KATEGORI_TANGGAL_NAMAFILE.ext
         fname = f"{kat}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
         file.save(os.path.join(target_dir, fname))
-        flash(f"Berkas {kat} Berhasil diupload!", "success")
+        flash(f"Berkas {kat} Berhasil dikirim!", "success")
     else:
-        flash("Gagal upload! Pastikan file dipilih dan format sesuai.", "danger")
-    return redirect(url_for('dashboard'))
+        flash("Gagal upload! Pastikan file dipilih dan format sesuai (PDF/JPG/PNG).", "danger")
+    
+    return redirect(url_for('upload_berkas'))
+
+@app.route('/download/<nip>/<filename>')
+def download_file(nip, filename):
+    """Menampilkan/Download file dari riwayat"""
+    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+    return send_from_directory(path, filename)
 
 # --- ADMIN: BERKAS MASUK ---
 @app.route('/admin/berkas_masuk')
@@ -153,7 +175,7 @@ def berkas_masuk():
                     list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
     return render_template('admin_berkas.html', data=list_masuk)
 
-# --- SIDALAP MART (TOKO) ---
+# --- SIDALAP MART ---
 @app.route('/toko')
 def toko():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -173,7 +195,7 @@ def tambah_produk():
     flash("Produk diposting ke SIDALAP Mart!", "success")
     return redirect(url_for('toko'))
 
-# --- KOMUNIKASI ---
+# --- CHAT & INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -188,7 +210,7 @@ def kirim_pesan():
     db.session.add(PesanChat(user_id=session.get('user_id'), nama_pengirim=user.nama if user else "ADMIN", role=session.get('user_role'), isi_pesan=request.form.get('pesan')))
     db.session.commit(); return redirect(url_for('chat_info'))
 
-# --- DATA PEGAWAI & PROFIL (SUDAH FIX UPDATE) ---
+# --- DATA PEGAWAI & PROFIL ---
 @app.route('/data_pegawai', methods=['GET', 'POST'])
 def data_pegawai():
     if session.get('user_role') != 'admin': return redirect(url_for('landing'))
