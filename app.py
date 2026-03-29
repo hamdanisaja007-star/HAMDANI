@@ -62,7 +62,6 @@ class PesanChat(db.Model):
     isi_pesan = db.Column(db.Text, nullable=False)
     waktu = db.Column(db.DateTime, default=datetime.now)
 
-# MODEL BARU: SIDALAP MART
 class Produk(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nama_barang = db.Column(db.String(100), nullable=False)
@@ -117,11 +116,11 @@ def dashboard():
     today = date.today()
     pegawai_list = Pegawai.query.all()
     
-    # Hitung Statistik untuk Admin
+    # Hitung Statistik dengan pengaman (agar tidak Error 500)
     stat = {
         'total': len(pegawai_list),
-        'pns': Pegawai.query.filter_by(jenis_pegawai='PNS').count(),
-        'pppk': Pegawai.query.filter_by(jenis_pegawai='PPPK').count()
+        'pns': Pegawai.query.filter_by(jenis_pegawai='PNS').count() if pegawai_list else 0,
+        'pppk': Pegawai.query.filter_by(jenis_pegawai='PPPK').count() if pegawai_list else 0
     }
 
     if role == 'admin':
@@ -171,7 +170,6 @@ def tambah_produk():
     desc = request.form.get('deskripsi')
     file = request.files.get('foto')
     
-    # Ambil info penjual dari session
     user = Pegawai.query.get(session.get('user_id')) if session.get('user_role') != 'admin' else None
     
     fname = "default_item.png"
@@ -180,17 +178,14 @@ def tambah_produk():
         file.save(os.path.join(app.config['PRODUK_UPLOAD'], fname))
 
     baru = Produk(
-        nama_barang=nama,
-        harga=harga,
-        deskripsi=desc,
-        foto_produk=fname,
+        nama_barang=nama, harga=harga, deskripsi=desc, foto_produk=fname,
         penjual_id=session.get('user_id'),
         nama_penjual=user.nama if user else "ADMIN",
         wa_penjual=user.no_hp if user else "62812345678"
     )
     db.session.add(baru)
     db.session.commit()
-    flash("Produk berhasil diposting di SIDALAP Mart!", "success")
+    flash("Produk berhasil diposting!", "success")
     return redirect(url_for('toko'))
 
 @app.route('/hapus_produk/<int:id>')
@@ -199,12 +194,8 @@ def hapus_produk(id):
     if p and (session.get('user_role') == 'admin' or p.penjual_id == session.get('user_id')):
         db.session.delete(p)
         db.session.commit()
-        flash("Produk berhasil dihapus!", "info")
+        flash("Produk dihapus!", "info")
     return redirect(url_for('toko'))
-
-@app.route('/produk_foto/<filename>')
-def serve_produk(filename):
-    return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
 
 # --- KOMUNIKASI ---
 @app.route('/chat_info')
@@ -216,10 +207,11 @@ def chat_info():
 
     if role != 'admin':
         user = Pegawai.query.get(session['user_id'])
-        for i in info:
-            if not LogBaca.query.filter_by(pengumuman_id=i.id, nip_pembaca=user.nip).first():
-                db.session.add(LogBaca(pengumuman_id=i.id, nip_pembaca=user.nip, nama_pembaca=user.nama))
-        db.session.commit()
+        if user:
+            for i in info:
+                if not LogBaca.query.filter_by(pengumuman_id=i.id, nip_pembaca=user.nip).first():
+                    db.session.add(LogBaca(pengumuman_id=i.id, nip_pembaca=user.nip, nama_pembaca=user.nama))
+            db.session.commit()
     
     logs = {i.id: LogBaca.query.filter_by(pengumuman_id=i.id).all() for i in info} if role == 'admin' else {}
     return render_template('chat_info.html', info_terkini=info, logs=logs, role=role, all_messages=all_messages)
@@ -229,7 +221,7 @@ def kirim_pesan():
     isi = request.form.get('pesan')
     if isi:
         user = Pegawai.query.get(session.get('user_id')) if session.get('user_role') != 'admin' else None
-        nama = "ADMIN SIDALAP" if session.get('user_role') == 'admin' else user.nama
+        nama = "ADMIN SIDALAP" if session.get('user_role') == 'admin' else (user.nama if user else "PLKB")
         baru = PesanChat(user_id=session.get('user_id'), nama_pengirim=nama, role=session.get('user_role'), isi_pesan=isi)
         db.session.add(baru)
         db.session.commit()
@@ -259,7 +251,7 @@ def data_pegawai():
     pegawai = Pegawai.query.all()
     return render_template('data_pegawai.html', pegawai=pegawai)
 
-# --- PROFIL & BERKAS ---
+# --- PROFIL ---
 @app.route('/profil')
 def profil():
     user = Pegawai.query.filter_by(nip=session.get('user_nip')).first()
@@ -280,6 +272,13 @@ def update_profil():
         db.session.commit()
         flash("Profil Update!", "success")
     return redirect(url_for('profil'))
+
+# --- FILE SERVING ---
+@app.route('/produk_foto/<filename>')
+def serve_produk(filename): return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
+
+@app.route('/foto_profil/<filename>')
+def serve_foto(filename): return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
 
 @app.route('/logout')
 def logout():
