@@ -130,10 +130,8 @@ def upload_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
     nip = session['user_nip']
     target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
-    
     if not os.path.exists(target_dir):
         os.makedirs(target_dir, exist_ok=True)
-        
     user_files = os.listdir(target_dir)
     return render_template('upload.html', files=user_files)
 
@@ -143,7 +141,6 @@ def simpan_berkas():
     file = request.files.get('file_berkas')
     kat = request.form.get('kategori', 'LAINNYA').upper()
     nip = session['user_nip']
-    
     if file and file.filename != '' and allowed_file(file.filename):
         target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
         os.makedirs(target_dir, exist_ok=True)
@@ -204,13 +201,42 @@ def update_profil():
         flash("Profil berhasil diperbarui!", "success")
     return redirect(url_for('profil'))
 
-# --- TOKO & CHAT ---
+# --- SIDALAP MART (TOKO) ---
 @app.route('/toko')
 def toko():
     if 'user_role' not in session: return redirect(url_for('landing'))
     semua_produk = Produk.query.order_by(Produk.tanggal_post.desc()).all()
     return render_template('toko.html', produk=semua_produk, role=session.get('user_role'))
 
+@app.route('/tambah_produk', methods=['POST'])
+def tambah_produk():
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    nama = request.form.get('nama_barang')
+    harga = request.form.get('harga')
+    wa = request.form.get('wa_penjual')
+    deskripsi = request.form.get('deskripsi')
+    file = request.files.get('foto_produk')
+    
+    fname = "default_produk.png"
+    if file and allowed_file(file.filename):
+        fname = f"prod_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
+        file.save(os.path.join(app.config['PRODUK_UPLOAD'], fname))
+    
+    user_now = Pegawai.query.filter_by(nip=session.get('user_nip')).first()
+    nama_penjual = user_now.nama if user_now else "ADMIN"
+    
+    baru = Produk(nama_barang=nama, harga=harga, wa_penjual=wa, deskripsi=deskripsi, 
+                  foto_produk=fname, nama_penjual=nama_penjual, penjual_id=session.get('user_id'))
+    db.session.add(baru)
+    db.session.commit()
+    flash("Produk berhasil diposting!", "success")
+    return redirect(url_for('toko'))
+
+@app.route('/produk_foto/<filename>')
+def serve_produk(filename):
+    return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
+
+# --- CHAT & INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
