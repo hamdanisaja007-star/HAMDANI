@@ -9,7 +9,8 @@ app.secret_key = "sidallap_sukabumi_2026_secure"
 
 # --- KONFIGURASI (Vercel & Local) ---
 BASE_TMP = "/tmp"
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_TMP, "sidalap_v2.db")}'
+# Menggunakan v3 untuk memastikan struktur database terbaru ter-instansiasi
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_TMP, "sidalap_v3.db")}'
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_TMP, 'loker_berkas')
 app.config['CHAT_UPLOAD'] = os.path.join(BASE_TMP, 'chat_files')
 app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
@@ -123,14 +124,13 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
-# --- LOKER BERKAS (FIXED) ---
+# --- LOKER BERKAS ---
 @app.route('/upload_berkas', methods=['GET'])
 def upload_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
     nip = session['user_nip']
     target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
     
-    # Pastikan folder ada sebelum listdir agar tidak Internal Server Error
     if not os.path.exists(target_dir):
         os.makedirs(target_dir, exist_ok=True)
         
@@ -192,7 +192,9 @@ def profil():
 def update_profil():
     user = Pegawai.query.filter_by(nip=session.get('user_nip')).first()
     if user:
-        user.jabatan = request.form.get('jabatan'); user.no_hp = request.form.get('no_hp'); user.kecamatan = request.form.get('kecamatan')
+        user.jabatan = request.form.get('jabatan')
+        user.no_hp = request.form.get('no_hp')
+        user.kecamatan = request.form.get('kecamatan')
         file_foto = request.files.get('foto_profil')
         if file_foto and allowed_file(file_foto.filename):
             fname = f"foto_{user.nip}.jpg"
