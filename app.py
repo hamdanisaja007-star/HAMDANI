@@ -134,6 +134,28 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
+# --- FITUR BERKAS MASUK (ADMIN ONLY) ---
+@app.route('/admin/berkas_masuk')
+def berkas_masuk():
+    if session.get('user_role') != 'admin':
+        return redirect(url_for('dashboard'))
+    
+    list_masuk = []
+    if os.path.exists(app.config['UPLOAD_FOLDER']):
+        for nip_folder in os.listdir(app.config['UPLOAD_FOLDER']):
+            p = Pegawai.query.filter_by(nip=nip_folder).first()
+            folder_path = os.path.join(app.config['UPLOAD_FOLDER'], nip_folder)
+            
+            if os.path.isdir(folder_path):
+                for file_name in os.listdir(folder_path):
+                    list_masuk.append({
+                        'nama': p.nama if p else "User Tidak Dikenal",
+                        'nip': nip_folder,
+                        'file': file_name,
+                        'kategori': file_name.split('_')[0] if '_' in file_name else "Lainnya"
+                    })
+    return render_template('admin_berkas.html', data=list_masuk)
+
 # --- FITUR TOKO (SIDALAP MART) ---
 @app.route('/toko')
 def toko():
