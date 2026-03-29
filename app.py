@@ -16,7 +16,7 @@ app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
 app.config['PRODUK_UPLOAD'] = os.path.join(BASE_TMP, 'produk_foto')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan semua folder sistem siap
+# Pastikan folder sistem siap
 for folder in [app.config['UPLOAD_FOLDER'], app.config['CHAT_UPLOAD'], app.config['PROFIL_UPLOAD'], app.config['PRODUK_UPLOAD']]:
     os.makedirs(folder, exist_ok=True)
 
@@ -123,15 +123,18 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
-# --- LOKER BERKAS ---
+# --- LOKER BERKAS (FIXED) ---
 @app.route('/upload_berkas', methods=['GET'])
 def upload_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
     nip = session['user_nip']
-    user_files = []
     target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
-    if os.path.exists(target_dir):
-        user_files = os.listdir(target_dir)
+    
+    # Pastikan folder ada sebelum listdir agar tidak Internal Server Error
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir, exist_ok=True)
+        
+    user_files = os.listdir(target_dir)
     return render_template('upload.html', files=user_files)
 
 @app.route('/simpan_berkas', methods=['POST'])
@@ -140,14 +143,15 @@ def simpan_berkas():
     file = request.files.get('file_berkas')
     kat = request.form.get('kategori', 'LAINNYA').upper()
     nip = session['user_nip']
-    if file and allowed_file(file.filename):
+    
+    if file and file.filename != '' and allowed_file(file.filename):
         target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
         os.makedirs(target_dir, exist_ok=True)
         fname = f"{kat}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
         file.save(os.path.join(target_dir, fname))
         flash(f"Berkas {kat} Berhasil dikirim!", "success")
     else:
-        flash("Gagal! Pilih file format PDF/JPG/PNG.", "danger")
+        flash("Gagal! Pastikan file dipilih dan formatnya PDF/JPG/PNG.", "danger")
     return redirect(url_for('upload_berkas'))
 
 # --- DATA PEGAWAI (ADMIN) ---
@@ -191,8 +195,11 @@ def update_profil():
         user.jabatan = request.form.get('jabatan'); user.no_hp = request.form.get('no_hp'); user.kecamatan = request.form.get('kecamatan')
         file_foto = request.files.get('foto_profil')
         if file_foto and allowed_file(file_foto.filename):
-            fname = f"foto_{user.nip}.jpg"; file_foto.save(os.path.join(app.config['PROFIL_UPLOAD'], fname)); user.foto = fname
-        db.session.commit(); flash("Profil berhasil diperbarui!", "success")
+            fname = f"foto_{user.nip}.jpg"
+            file_foto.save(os.path.join(app.config['PROFIL_UPLOAD'], fname))
+            user.foto = fname
+        db.session.commit()
+        flash("Profil berhasil diperbarui!", "success")
     return redirect(url_for('profil'))
 
 # --- TOKO & CHAT ---
@@ -213,12 +220,14 @@ def chat_info():
 def kirim_pesan():
     user = Pegawai.query.get(session.get('user_id')) if session.get('user_role') != 'admin' else None
     db.session.add(PesanChat(user_id=session.get('user_id'), nama_pengirim=user.nama if user else "ADMIN", role=session.get('user_role'), isi_pesan=request.form.get('pesan')))
-    db.session.commit(); return redirect(url_for('chat_info'))
+    db.session.commit()
+    return redirect(url_for('chat_info'))
 
 # --- FILE SERVING ---
 @app.route('/download/<nip>/<filename>')
 def download_file(nip, filename):
-    return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], nip), filename)
+    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+    return send_from_directory(path, filename)
 
 @app.route('/foto_profil/<filename>')
 def serve_foto(filename):
@@ -232,6 +241,7 @@ def logout():
     session.clear()
     return redirect(url_for('landing'))
 
+# --- DB INIT ---
 with app.app_context(): 
     db.create_all()
 
