@@ -13,7 +13,7 @@
         .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #333; }
         .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
         .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; }
-        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
+        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
         .stat-card { transition: transform 0.2s; border: none; border-radius: 15px; }
         .stat-card:hover { transform: translateY(-5px); }
         .pointer { cursor: pointer; }
@@ -35,15 +35,15 @@
             <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
                 {% if session['user_role'] == 'admin' %}
-                    <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/admin/berkas_masuk"><i class="fas fa-folder-open me-2"></i> Berkas Masuk</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/dashboard' }}" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/data_pegawai' }}" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/admin/berkas_masuk' }}" href="/admin/berkas_masuk"><i class="fas fa-folder-open me-2"></i> Berkas Masuk</a></li>
                 {% else %}
-                    <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-home me-2"></i> Beranda</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/profil"><i class="fas fa-user-circle me-2"></i> Profil Saya</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/berkas_saya"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/dashboard' }}" href="/dashboard"><i class="fas fa-home me-2"></i> Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/profil' }}" href="/profil"><i class="fas fa-user-circle me-2"></i> Profil Saya</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/upload_berkas' }}" href="/upload_berkas"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
                 {% endif %}
                 <li class="nav-item mt-4"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
             </ul>
@@ -88,7 +88,7 @@
                                 <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
                                 <div>
                                     <h6 class="text-muted mb-0 small text-uppercase">Total Pegawai</h6>
-                                    <h3 class="fw-bold mb-0">{{ pegawai|length }}</h3>
+                                    <h3 class="fw-bold mb-0">{{ pegawai|length if pegawai else 0 }}</h3>
                                 </div>
                             </div>
                         </div>
@@ -100,7 +100,7 @@
                                 <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
                                 <div>
                                     <h6 class="text-muted mb-0 small text-uppercase">Naik Pangkat</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3>
+                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length if notif_pangkat else 0 }}</h3>
                                     <small class="text-warning fw-bold">Klik untuk rincian</small>
                                 </div>
                             </div>
@@ -113,7 +113,7 @@
                                 <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
                                 <div>
                                     <h6 class="text-muted mb-0 small text-uppercase">Jelang Pensiun</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3>
+                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length if notif_pensiun else 0 }}</h3>
                                     <small class="text-danger fw-bold">Klik untuk rincian</small>
                                 </div>
                             </div>
@@ -130,11 +130,11 @@
                                     <h2 class="fw-bold text-dark mb-1">Halo, {{ user_now.nama }}!</h2>
                                     <p class="text-muted mb-2"><i class="fas fa-id-card me-2"></i>NIP: {{ user_now.nip }}</p>
                                     <div class="d-flex gap-2">
-                                        <span class="badge bg-info p-2 px-3 rounded-pill">{{ user_now.jabatan or 'Jabatan Belum Diisi' }}</span>
+                                        <span class="badge bg-info p-2 px-3 rounded-pill text-white">{{ user_now.jabatan or 'Jabatan Belum Diisi' }}</span>
                                         <span class="badge bg-dark p-2 px-3 rounded-pill">{{ user_now.pangkat_gol or '-' }}</span>
                                     </div>
                                 </div>
-                                <div class="col-md-4 border-start d-none d-md-block">
+                                <div class="col-md-4 border-start d-none d-md-block px-4">
                                     <p class="mb-1 small fw-bold text-muted">WILAYAH TUGAS:</p>
                                     <p class="mb-1"><i class="fas fa-map-marker-alt text-danger me-2"></i>Kec. {{ user_now.kecamatan or '-' }}</p>
                                     <p class="mb-0"><i class="fas fa-home text-success me-2"></i>Desa: {{ user_now.desa_binaan or '-' }}</p>
@@ -166,7 +166,7 @@
                                         <td><span class="badge bg-warning text-dark">Waktunya Usul</span></td>
                                     </tr>
                                     {% else %}
-                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang masuk periode naik pangkat bulan ini.</td></tr>
+                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang masuk periode naik pangkat.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -177,7 +177,7 @@
                 <div class="collapse mb-4" id="collapsePensiun">
                     <div class="card border-0 shadow rounded-4 overflow-hidden">
                         <div class="card-header bg-danger text-white fw-bold py-3">
-                            <i class="fas fa-user-clock me-2"></i>Daftar Pegawai Jelang Pensiun (Umur 57-58)
+                            <i class="fas fa-user-clock me-2"></i>Daftar Pegawai Jelang Pensiun
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0 align-middle">
@@ -190,7 +190,7 @@
                                         <td class="fw-bold">{{ p.nama }}</td>
                                         <td>{{ p.nip }}</td>
                                         <td>{{ p.tgl_lahir }}</td>
-                                        <td><span class="badge bg-danger">Persiapan MPP</span></td>
+                                        <td><span class="badge bg-danger text-white">Persiapan MPP</span></td>
                                     </tr>
                                     {% else %}
                                     <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang pensiun tahun ini.</td></tr>
@@ -211,7 +211,7 @@
                     <div class="d-flex gap-3">
                         <a href="/chat_info" class="btn btn-info fw-bold px-4 shadow text-white rounded-pill">PENGUMUMAN <i class="fas fa-bell ms-2"></i></a>
                         {% if session['user_role'] != 'admin' %}
-                        <a href="/berkas_saya" class="btn btn-outline-light fw-bold px-4 rounded-pill">KIRIM BERKAS <i class="fas fa-upload ms-2"></i></a>
+                        <a href="/upload_berkas" class="btn btn-outline-light fw-bold px-4 rounded-pill">KIRIM BERKAS <i class="fas fa-upload ms-2"></i></a>
                         {% endif %}
                     </div>
                 </div>
