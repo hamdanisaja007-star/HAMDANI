@@ -9,7 +9,7 @@ app.secret_key = "sidallap_sukabumi_2026_secure"
 
 # --- KONFIGURASI (Vercel & Local) ---
 BASE_TMP = "/tmp"
-# Menggunakan v3 untuk memastikan struktur database terbaru ter-instansiasi
+# Menggunakan v3 untuk memastikan database bersih di lingkungan Vercel
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_TMP, "sidalap_v3.db")}'
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_TMP, 'loker_berkas')
 app.config['CHAT_UPLOAD'] = os.path.join(BASE_TMP, 'chat_files')
@@ -17,7 +17,7 @@ app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
 app.config['PRODUK_UPLOAD'] = os.path.join(BASE_TMP, 'produk_foto')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan folder sistem siap
+# Pastikan folder sistem siap di /tmp
 for folder in [app.config['UPLOAD_FOLDER'], app.config['CHAT_UPLOAD'], app.config['PROFIL_UPLOAD'], app.config['PRODUK_UPLOAD']]:
     os.makedirs(folder, exist_ok=True)
 
@@ -125,7 +125,7 @@ def dashboard():
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
 # --- LOKER BERKAS ---
-@app.route('/upload_berkas', methods=['GET'])
+@app.route('/upload_berkas')
 def upload_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
     nip = session['user_nip']
