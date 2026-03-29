@@ -14,7 +14,6 @@ app.config['UPLOAD_FOLDER'] = os.path.join(BASE_TMP, 'loker_berkas')
 app.config['CHAT_UPLOAD'] = os.path.join(BASE_TMP, 'chat_files')
 app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
 app.config['PRODUK_UPLOAD'] = os.path.join(BASE_TMP, 'produk_foto')
-app.config['STATIC_IMAGES'] = os.path.join(os.getcwd(), 'static/images') # Folder slide/banner
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Pastikan semua folder sistem siap
@@ -104,7 +103,7 @@ def auth():
     flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD & UPLOAD BERKAS ---
+# --- DASHBOARD & UPLOAD BERKAS (SUDAH FIX METHOD) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -117,12 +116,10 @@ def dashboard():
         'pns': Pegawai.query.filter_by(jenis_pegawai='PNS').count() if pegawai_list else 0,
         'pppk': Pegawai.query.filter_by(jenis_pegawai='PPPK').count() if pegawai_list else 0
     }
-
     if role == 'admin':
         for p in pegawai_list:
             if p.tmt_pangkat and (today.year - p.tmt_pangkat.year) >= 4: notif_pangkat.append(p)
             if p.tgl_lahir and (today.year - p.tgl_lahir.year) >= 57: notif_pensiun.append(p)
-
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
@@ -132,7 +129,6 @@ def upload_berkas():
     file = request.files.get('file_berkas')
     kat = request.form.get('kategori_berkas', 'LAINNYA').upper()
     nip = session['user_nip']
-    
     if file and allowed_file(file.filename):
         target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
         os.makedirs(target_dir, exist_ok=True)
@@ -140,7 +136,7 @@ def upload_berkas():
         file.save(os.path.join(target_dir, fname))
         flash(f"Berkas {kat} Berhasil diupload!", "success")
     else:
-        flash("Gagal upload! Format file tidak didukung.", "danger")
+        flash("Gagal upload! Pastikan file dipilih dan format sesuai.", "danger")
     return redirect(url_for('dashboard'))
 
 # --- ADMIN: BERKAS MASUK ---
@@ -161,7 +157,8 @@ def berkas_masuk():
 @app.route('/toko')
 def toko():
     if 'user_role' not in session: return redirect(url_for('landing'))
-    return render_template('toko.html', produk=Produk.query.order_by(Produk.tanggal_post.desc()).all(), role=session.get('user_role'))
+    semua_produk = Produk.query.order_by(Produk.tanggal_post.desc()).all()
+    return render_template('toko.html', produk=semua_produk, role=session.get('user_role'))
 
 @app.route('/tambah_produk', methods=['POST'])
 def tambah_produk():
@@ -173,6 +170,7 @@ def tambah_produk():
                           deskripsi=request.form.get('deskripsi'), foto_produk=fname, penjual_id=session.get('user_id'),
                           nama_penjual=user.nama if user else "ADMIN", wa_penjual=user.no_hp if user else "62812345678"))
     db.session.commit()
+    flash("Produk diposting ke SIDALAP Mart!", "success")
     return redirect(url_for('toko'))
 
 # --- KOMUNIKASI ---
@@ -190,7 +188,7 @@ def kirim_pesan():
     db.session.add(PesanChat(user_id=session.get('user_id'), nama_pengirim=user.nama if user else "ADMIN", role=session.get('user_role'), isi_pesan=request.form.get('pesan')))
     db.session.commit(); return redirect(url_for('chat_info'))
 
-# --- DATA PEGAWAI & PROFIL ---
+# --- DATA PEGAWAI & PROFIL (SUDAH FIX UPDATE) ---
 @app.route('/data_pegawai', methods=['GET', 'POST'])
 def data_pegawai():
     if session.get('user_role') != 'admin': return redirect(url_for('landing'))
@@ -201,26 +199,36 @@ def data_pegawai():
 
 @app.route('/profil')
 def profil():
+    if 'user_nip' not in session: return redirect(url_for('landing'))
     user = Pegawai.query.filter_by(nip=session.get('user_nip')).first()
     return render_template('profil.html', user_now=user)
 
-# --- FILE SERVING (FIX 404) ---
+@app.route('/update_profil', methods=['POST'])
+def update_profil():
+    user = Pegawai.query.filter_by(nip=session.get('user_nip')).first()
+    if user:
+        user.jabatan = request.form.get('jabatan')
+        user.no_hp = request.form.get('no_hp')
+        user.kecamatan = request.form.get('kecamatan')
+        file_foto = request.files.get('foto_profil')
+        if file_foto and allowed_file(file_foto.filename):
+            fname = f"foto_{user.nip}.jpg"
+            file_foto.save(os.path.join(app.config['PROFIL_UPLOAD'], fname))
+            user.foto = fname
+        db.session.commit()
+        flash("Profil berhasil diperbarui!", "success")
+    return redirect(url_for('profil'))
+
+# --- FILE SERVING ---
 @app.route('/foto_profil/<filename>')
-def serve_foto(filename):
-    return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
+def serve_foto(filename): return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
 
 @app.route('/produk_foto/<filename>')
-def serve_produk(filename):
-    return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
-
-@app.route('/static/images/<filename>')
-def serve_static_images(filename):
-    return send_from_directory(app.config['STATIC_IMAGES'], filename)
+def serve_produk(filename): return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
 
 @app.route('/logout')
 def logout(): session.clear(); return redirect(url_for('landing'))
 
 with app.app_context(): db.create_all()
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == '__main__': app.run(debug=True)
