@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -13,7 +14,7 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                       {% if messages %}
                         {% for category, message in messages %}
-                          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                          <div class="alert alert-{{ category }} alert-dismissible fade show border-0 shadow-sm" role="alert">
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                           </div>
@@ -23,8 +24,8 @@
 
                     <form action="/simpan_berkas" method="POST" enctype="multipart/form-data">
                         <div class="mb-4">
-                            <label class="form-label fw-bold">1. Pilih Kategori Berkas</label>
-                            <select name="kategori" class="form-select form-select-lg border-info shadow-sm" required>
+                            <label class="form-label fw-bold text-muted small">1. PILIH KATEGORI BERKAS</label>
+                            <select name="kategori" class="form-select form-select-lg border-info shadow-sm bg-light" required>
                                 <option value="" selected disabled>-- Pilih Jenis Berkas --</option>
                                 <option value="PANGKAT">Kenaikan Pangkat (IV/a ke bawah)</option>
                                 <option value="PENSIUN">Pemberkasan Pensiun</option>
@@ -34,17 +35,17 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold">2. Upload File (PDF/Gambar/Docx)</label>
+                            <label class="form-label fw-bold text-muted small">2. UPLOAD FILE (PDF/GABAR/DOCX)</label>
                             <div class="input-group">
                                 <input type="file" name="file_berkas" class="form-control form-control-lg border-info shadow-sm" id="inputGroupFile02" required>
                             </div>
-                            <div class="form-text text-danger mt-2">
+                            <div class="form-text text-danger mt-2 small">
                                 <i class="fas fa-info-circle me-1"></i> Maksimal ukuran file 5MB. Pastikan file jelas terbaca.
                             </div>
                         </div>
 
                         <div class="d-grid mt-5">
-                            <button type="submit" class="btn btn-info btn-lg fw-bold text-white shadow">
+                            <button type="submit" class="btn btn-info btn-lg fw-bold text-white shadow rounded-3">
                                 <i class="fas fa-paper-plane me-2"></i> KIRIM SEKARANG
                             </button>
                         </div>
@@ -58,20 +59,33 @@
                     {% for f in files %}
                     <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 mb-2 rounded shadow-sm py-3">
                         <div class="d-flex align-items-center">
-                            <i class="far fa-file-pdf fa-2x text-danger me-3"></i>
+                            {% if f.lower().endswith('.pdf') %}
+                                <i class="far fa-file-pdf fa-2x text-danger me-3"></i>
+                            {% elif f.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                                <i class="far fa-file-image fa-2x text-success me-3"></i>
+                            {% elif f.lower().endswith(('.doc', '.docx')) %}
+                                <i class="far fa-file-word fa-2x text-primary me-3"></i>
+                            {% else %}
+                                <i class="far fa-file-alt fa-2x text-secondary me-3"></i>
+                            {% endif %}
+                            
                             <div>
-                                <h6 class="mb-0 fw-bold">{{ f }}</h6>
-                                <small class="text-muted">Tersimpan di Server</small>
+                                <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">{{ f }}</h6>
+                                <small class="text-muted small">Tersimpan secara digital</small>
                             </div>
                         </div>
-                        <a href="/download/{{ session['user_nip'] }}/{{ f }}" class="btn btn-sm btn-outline-info rounded-pill px-3">
-                            <i class="fas fa-eye"></i>
+                        
+                        <a href="{{ url_for('download_file', nip=session['user_nip'], filename=f) }}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
+                            <i class="fas fa-eye me-1"></i> Lihat
                         </a>
                     </div>
                     {% else %}
-                    <div class="text-center py-4 bg-white rounded shadow-sm text-muted">
+                    <div class="text-center py-5 bg-white rounded shadow-sm text-muted">
                         <i class="fas fa-folder-open fa-3x mb-3 opacity-25"></i>
-                        <p>Belum ada berkas yang Anda kirim.</p>
+                        <p class="mb-0">Belum ada berkas yang Anda kirim.</p>
+                        <small>Silakan gunakan form di atas untuk mengirim berkas.</small>
                     </div>
                     {% endfor %}
                 </div>
