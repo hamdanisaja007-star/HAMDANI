@@ -21,12 +21,12 @@
         .alert-animated { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        /* CSS KHUSUS PORTAL LAYANAN */
+        /* CSS TAMBAHAN UNTUK PORTAL LAYANAN */
         .portal-tabs .nav-link { color: #555; font-weight: 600; border-radius: 30px; padding: 10px 20px; margin-right: 10px; border: 1px solid #ddd; background-color: white; }
         .portal-tabs .nav-link.active { background-color: var(--bkkbn-blue) !important; color: white !important; border-color: var(--bkkbn-blue); }
-        .layanan-box { background: white; border-radius: 15px; padding: 20px; border: 1px solid #eaeaea; transition: 0.3s; display: flex; align-items: center; height: 100%; text-decoration: none; color: inherit; }
+        .layanan-box { background: white; border-radius: 15px; padding: 15px; border: 1px solid #eaeaea; transition: 0.3s; display: flex; align-items: center; height: 100%; text-decoration: none; color: inherit; }
         .layanan-box:hover { border-color: var(--bkkbn-blue); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); color: var(--bkkbn-blue); }
-        .layanan-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 1.4rem; flex-shrink: 0; }
+        .layanan-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 1.2rem; flex-shrink: 0; }
         .bg-sdm { background-color: #e7f1ff; color: #007bff; }
         .bg-prog { background-color: #fff8e1; color: #fbc02d; }
         .bg-umum { background-color: #e8f5e9; color: #28a745; }
@@ -73,16 +73,8 @@
             {% if session['user_role'] != 'admin' %}
             <div class="nav-label">Link Pekerjaan</div>
             <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="https://kinerja.bkn.go.id/login" target="_blank">
-                        <i class="fas fa-external-link-alt me-2 text-warning"></i> E-Kinerja BKN
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank">
-                        <i class="fas fa-database me-2 text-success"></i> New SIGA
-                    </a>
-                </li>
+                <li class="nav-item"><a class="nav-link" href="https://kinerja.bkn.go.id/login" target="_blank"><i class="fas fa-external-link-alt me-2 text-warning"></i> E-Kinerja BKN</a></li>
+                <li class="nav-item"><a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank"><i class="fas fa-database me-2 text-success"></i> New SIGA</a></li>
             </ul>
             {% endif %}
 
@@ -117,7 +109,7 @@
                 <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
                 <div>
                     <h6 class="fw-bold mb-1">Penting: Data Profil Belum Lengkap!</h6>
-                    <p class="small mb-0">Silakan lengkapi <strong>TMT Pangkat</strong> dan <strong>Tanggal Lahir</strong> di menu <a href="/profil" class="fw-bold">Profil Saya</a> agar sistem bisa menghitung masa pangkat/pensiun Anda.</p>
+                    <p class="small mb-0">Silakan lengkapi <strong>TMT Pangkat</strong> dan <strong>Tanggal Lahir</strong> di menu <a href="/profil" class="fw-bold">Profil Saya</a>.</p>
                 </div>
             </div>
             {% endif %}
@@ -128,47 +120,31 @@
                         <div class="card stat-card bg-white p-4 border-start border-info border-5 shadow-sm">
                             <div class="d-flex align-items-center">
                                 <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
-                                <div>
-                                    <h6 class="text-muted mb-0 small text-uppercase">Total PLKB</h6>
-                                    <h3 class="fw-bold mb-0">{{ stat.total }}</h3>
-                                </div>
+                                <div><h6 class="text-muted mb-0 small text-uppercase">Total PLKB</h6><h3 class="fw-bold mb-0">{{ stat.total }}</h3></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-warning border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePangkat">
                             <div class="d-flex align-items-center">
                                 <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
-                                <div>
-                                    <h6 class="text-muted mb-0 small text-uppercase">Naik Pangkat</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3>
-                                </div>
+                                <div><h6 class="text-muted mb-0 small text-uppercase">Naik Pangkat</h6><h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-danger border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePensiun">
                             <div class="d-flex align-items-center">
                                 <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
-                                <div>
-                                    <h6 class="text-muted mb-0 small text-uppercase">Jelang Pensiun</h6>
-                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3>
-                                </div>
+                                <div><h6 class="text-muted mb-0 small text-uppercase">Jelang Pensiun</h6><h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-3 mb-3">
                         <div class="card stat-card bg-white p-4 border-start border-success border-5 shadow-sm pointer" onclick="window.location.href='/toko'">
                             <div class="d-flex align-items-center">
                                 <div class="bg-success text-white p-3 rounded-circle me-3"><i class="fas fa-store fa-2x"></i></div>
-                                <div>
-                                    <h6 class="text-muted mb-0 small text-uppercase">Produk Toko</h6>
-                                    <h3 class="fw-bold mb-0">Cek Toko</h3>
-                                    <small class="text-success fw-bold">SIDALAP Mart</small>
-                                </div>
+                                <div><h6 class="text-muted mb-0 small text-uppercase">Produk Toko</h6><h3 class="fw-bold mb-0">Cek Toko</h3></div>
                             </div>
                         </div>
                     </div>
@@ -183,7 +159,7 @@
                                     <h2 class="fw-bold text-dark mb-1">Halo, {{ user_now.nama }}!</h2>
                                     <p class="text-muted mb-2"><i class="fas fa-id-card me-2"></i>NIP: {{ user_now.nip }}</p>
                                     <div class="d-flex gap-2">
-                                        <span class="badge bg-info p-2 px-3 rounded-pill text-white">{{ user_now.jabatan or 'Jabatan Belum Diisi' }}</span>
+                                        <span class="badge bg-info p-2 px-3 rounded-pill text-white">{{ user_now.jabatan or '-' }}</span>
                                         <span class="badge bg-dark p-2 px-3 rounded-pill">{{ user_now.pangkat_gol or '-' }}</span>
                                     </div>
                                 </div>
@@ -197,64 +173,6 @@
                     </div>
                 {% endif %}
             </div>
-
-            {% if session['user_role'] == 'admin' %}
-            <div class="row">
-                <div class="collapse mb-4" id="collapsePangkat">
-                    <div class="card border-0 shadow rounded-4 overflow-hidden">
-                        <div class="card-header bg-warning text-dark fw-bold py-3">
-                            <i class="fas fa-medal me-2"></i>Daftar Usulan Naik Pangkat
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr><th>Nama</th><th>NIP</th><th>TMT Terakhir</th><th>Status</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for p in notif_pangkat %}
-                                    <tr>
-                                        <td class="fw-bold">{{ p.nama }}</td>
-                                        <td>{{ p.nip }}</td>
-                                        <td>{{ p.tmt_pangkat }}</td>
-                                        <td><span class="badge bg-warning text-dark">Waktunya Usul</span></td>
-                                    </tr>
-                                    {% else %}
-                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang masuk periode naik pangkat.</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="collapse mb-4" id="collapsePensiun">
-                    <div class="card border-0 shadow rounded-4 overflow-hidden">
-                        <div class="card-header bg-danger text-white fw-bold py-3">
-                            <i class="fas fa-user-clock me-2"></i>Daftar Pegawai Jelang Pensiun
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr><th>Nama</th><th>NIP</th><th>Tgl Lahir</th><th>Status</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for p in notif_pensiun %}
-                                    <tr>
-                                        <td class="fw-bold">{{ p.nama }}</td>
-                                        <td>{{ p.nip }}</td>
-                                        <td>{{ p.tgl_lahir }}</td>
-                                        <td><span class="badge bg-danger text-white">Persiapan MPP</span></td>
-                                    </tr>
-                                    {% else %}
-                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang pensiun tahun ini.</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
 
             <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
                 <div style="z-index: 2; position: relative;">
@@ -279,7 +197,7 @@
             <div class="modal-header border-bottom bg-white" style="border-radius: 25px 25px 0 0; padding: 25px 30px;">
                 <div>
                     <h4 class="modal-title fw-bold text-dark"><i class="fas fa-th-large text-primary me-2"></i>Portal Layanan SSO BKKBN</h4>
-                    <p class="text-muted small mb-0">Pilih kategori layanan untuk mengakses aplikasi.</p>
+                    <p class="text-muted small mb-0">Akses aplikasi internal BKKBN dalam satu pintu.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -291,34 +209,34 @@
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-lain" type="button"><i class="fas fa-ellipsis-h me-2"></i>Lainnya</button></li>
                 </ul>
                 <div class="tab-content">
-                    <div class="tab-pane fade show active" id="pills-sdm" role="tabpanel">
+                    <div class="tab-pane fade show active" id="pills-sdm">
                         <div class="row g-3">
-                            <div class="col-md-4"><a href="https://simsdm.bkkbn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-users-cog"></i></div><div><h6 class="fw-bold mb-0">SIMSDM</h6><small class="text-muted">SDM BKKBN</small></div></a></div>
-                            <div class="col-md-4"><a href="https://visum.bkkbn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-file-signature"></i></div><div><h6 class="fw-bold mb-0">E-VISUM</h6><small class="text-muted">Visum PKB/PLKB</small></div></a></div>
-                            <div class="col-md-4"><a href="https://kinerja.bkn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-chart-line"></i></div><div><h6 class="fw-bold mb-0">E-KINERJA</h6><small class="text-muted">Laporan SKP</small></div></a></div>
+                            <div class="col-md-4"><a href="https://simsdm.bkkbn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-users-cog"></i></div><div><h6 class="fw-bold mb-0">SIMSDM</h6><small class="text-muted">Manajemen SDM</small></div></a></div>
+                            <div class="col-md-4"><a href="https://visum.bkkbn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-file-signature"></i></div><div><h6 class="fw-bold mb-0">E-VISUM</h6><small class="text-muted">Laporan PKB/PLKB</small></div></a></div>
+                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-wallet"></i></div><div><h6 class="fw-bold mb-0">SIPP</h6><small class="text-muted">Gaji & Pendapatan</small></div></a></div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="pills-program" role="tabpanel">
+                    <div class="tab-pane fade" id="pills-program">
                         <div class="row g-3">
-                            <div class="col-md-4"><a href="https://newsiga-siga.bkkbn.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-database"></i></div><div><h6 class="fw-bold mb-0">NEW SIGA</h6><small class="text-muted">Info Keluarga</small></div></a></div>
+                            <div class="col-md-4"><a href="https://newsiga-siga.bkkbn.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-database"></i></div><div><h6 class="fw-bold mb-0">NEW SIGA</h6><small class="text-muted">Data & Pelaporan</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-home"></i></div><div><h6 class="fw-bold mb-0">KAMPUNG KB</h6><small class="text-muted">Keluarga Berkualitas</small></div></a></div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="pills-umum" role="tabpanel">
+                    <div class="tab-pane fade" id="pills-umum">
                         <div class="row g-3">
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-shield-alt"></i></div><div><h6 class="fw-bold mb-0">SAKINA</h6><small class="text-muted">SuperApps BKKBN</small></div></a></div>
-                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-baby-carriage"></i></div><div><h6 class="fw-bold mb-0">GENTING</h6><small class="text-muted">Cegah Stunting</small></div></a></div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="pills-lain" role="tabpanel">
+                    <div class="tab-pane fade" id="pills-lain">
                         <div class="row g-3">
-                            <div class="col-md-4"><a href="https://srikandi.arsip.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-archive"></i></div><div><h6 class="fw-bold mb-0">SRIKANDI</h6><small class="text-muted">Arsip Dinamis</small></div></a></div>
+                            <div class="col-md-4"><a href="https://kinerja.bkn.go.id/login" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-chart-line"></i></div><div><h6 class="fw-bold mb-0">E-KINERJA BKN</h6><small class="text-muted">Laporan SKP ASN</small></div></a></div>
+                            <div class="col-md-4"><a href="https://srikandi.arsip.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-archive"></i></div><div><h6 class="fw-bold mb-0">SRIKANDI</h6><small class="text-muted">Persuratan Digital</small></div></a></div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer border-0 p-4 bg-light" style="border-radius: 0 0 25px 25px;">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup Portal</button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
