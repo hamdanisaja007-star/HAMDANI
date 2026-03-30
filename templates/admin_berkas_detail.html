@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0">Berkas: {{ folder_name.split('_')[0] }}</h4>
+        <a href="/admin/unduh_arsip" class="btn btn-secondary btn-sm rounded-pill px-3">Kembali</a>
+    </div>
+
+    <div class="row">
+        {% for kategori, files in struktur_berkas.items() %}
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 bg-light rounded-3">
+                <div class="card-header bg-dark text-white fw-bold small text-uppercase">
+                    {{ kategori.replace('_', ' ') }}
+                </div>
+                <div class="card-body">
+                    {% if files %}
+                        <ul class="list-unstyled mb-0">
+                            {% for f in files %}
+                            <li class="mb-2 d-flex justify-content-between align-items-center border-bottom pb-1">
+                                <span class="small text-truncate" style="max-width: 150px;">{{ f }}</span>
+                                <a href="/static/uploads/arsip_plkb/{{ folder_name }}/{{ kategori }}/{{ f }}" 
+                                   class="btn btn-sm btn-success p-1 px-2" download>
+                                   <i class="fas fa-download"></i>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted small mb-0">Kosong</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
