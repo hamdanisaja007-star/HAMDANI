@@ -6,8 +6,13 @@
         <div class="col-md-8">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="card-header bg-dark text-white p-4">
-                    <h4 class="fw-bold mb-0"><i class="fas fa-cloud-upload-alt me-2 text-info"></i>Loker Berkas Digital</h4>
-                    <small class="opacity-75">Kirim berkas ke Admin IPeKB Kabupaten Sukabumi</small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="fw-bold mb-0"><i class="fas fa-cloud-upload-alt me-2 text-info"></i>Loker Berkas Digital</h4>
+                            <small class="opacity-75">Arsip Mandiri PLKB Kabupaten Sukabumi</small>
+                        </div>
+                        <span class="badge bg-info text-dark fw-bold">{{ user_now.jenis_pegawai }}</span>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     
@@ -28,26 +33,36 @@
                             <label class="form-label fw-bold text-muted small">1. PILIH KATEGORI BERKAS</label>
                             <select name="kategori" class="form-select form-select-lg border-info shadow-sm bg-light" required>
                                 <option value="" selected disabled>-- Pilih Jenis Berkas --</option>
-                                <option value="PANGKAT">Kenaikan Pangkat (IV/a ke bawah)</option>
-                                <option value="PENSIUN">Pemberkasan Pensiun</option>
-                                <option value="UMUM">Laporan / Berkas Umum</option>
-                                <option value="ARSIP">Arsip Pribadi</option>
+                                <option value="umum">Laporan / Berkas Umum</option>
+                                
+                                {# Filter Otomatis: Hanya PNS yang bisa lihat opsi ini #}
+                                {% if user_now.jenis_pegawai == 'PNS' %}
+                                    <option value="pangkat">Kenaikan Pangkat (PNS)</option>
+                                    <option value="pensiun">Pemberkasan Pensiun (PNS)</option>
+                                {% endif %}
+                                
+                                <option value="arsip">Arsip Pribadi / Lainnya</option>
                             </select>
+                            {% if user_now.jenis_pegawai != 'PNS' %}
+                            <div class="form-text text-warning small mt-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Status PPPK: Gunakan kategori <b>Umum</b> untuk laporan berkas.
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-muted small">2. UPLOAD FILE (PDF/GAMBAR/DOCX)</label>
+                            <label class="form-label fw-bold text-muted small">2. UPLOAD FILE (PDF/JPG/PNG)</label>
                             <div class="input-group">
                                 <input type="file" name="file_berkas" class="form-control form-control-lg border-info shadow-sm" id="inputGroupFile02" required>
                             </div>
                             <div class="form-text text-danger mt-2 small">
-                                <i class="fas fa-info-circle me-1"></i> Maksimal ukuran file 4MB (Batas Sistem). Pastikan file jelas terbaca.
+                                <i class="fas fa-info-circle me-1"></i> Maksimal 4MB. Berkas akan langsung masuk ke folder digital Anda sesuai kategori.
                             </div>
                         </div>
 
                         <div class="d-grid mt-5">
                             <button type="submit" class="btn btn-info btn-lg fw-bold text-white shadow rounded-3">
-                                <i class="fas fa-paper-plane me-2"></i> KIRIM SEKARANG
+                                <i class="fas fa-paper-plane me-2"></i> SIMPAN KE ARSIP DIGITAL
                             </button>
                         </div>
                     </form>
@@ -55,42 +70,48 @@
             </div>
 
             <div class="mt-5">
-                <h5 class="fw-bold mb-3"><i class="fas fa-history me-2 text-secondary"></i>Riwayat Pengiriman Anda</h5>
-                <div class="list-group shadow-sm">
-                    {% for f in files %}
-                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-0 mb-2 rounded shadow-sm py-3">
-                        <div class="d-flex align-items-center">
-                            {% if f.lower().endswith('.pdf') %}
-                                <i class="far fa-file-pdf fa-2x text-danger me-3"></i>
-                            {% elif f.lower().endswith(('.jpg', '.jpeg', '.png')) %}
-                                <i class="far fa-file-image fa-2x text-success me-3"></i>
-                            {% elif f.lower().endswith(('.doc', '.docx')) %}
-                                <i class="far fa-file-word fa-2x text-primary me-3"></i>
-                            {% else %}
-                                <i class="far fa-file-alt fa-2x text-secondary me-3"></i>
-                            {% endif %}
-                            
-                            <div style="max-width: 250px;">
-                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.9rem;">{{ f }}</h6>
-                                <small class="text-muted small">Tersimpan di server /tmp</small>
+                <h5 class="fw-bold mb-3 text-dark"><i class="fas fa-folder-tree me-2 text-warning"></i>Struktur Arsip Digital Anda</h5>
+                
+                {% if files_struktur %}
+                    {% for kategori, daftar_file in files_struktur.items() %}
+                        <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
+                            <div class="card-header bg-light py-2 border-bottom fw-bold text-uppercase small text-primary">
+                                <i class="fas fa-folder-open me-2"></i> Folder: {{ kategori }}
+                            </div>
+                            <div class="list-group list-group-flush">
+                                {% for f in daftar_file %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if f.lower().endswith('.pdf') %}
+                                            <i class="far fa-file-pdf fa-lg text-danger me-3"></i>
+                                        {% elif f.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                                            <i class="far fa-file-image fa-lg text-success me-3"></i>
+                                        {% else %}
+                                            <i class="far fa-file-alt fa-lg text-secondary me-3"></i>
+                                        {% endif %}
+                                        
+                                        <div style="max-width: 300px;">
+                                            <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 0.85rem;">{{ f }}</h6>
+                                        </div>
+                                    </div>
+                                    
+                                    {# Link Download berdasarkan Folder & Kategori #}
+                                    <a href="{{ url_for('download_arsip', folder=user_now.nama.replace(' ', '_')+'_'+user_now.nip, kat=kategori, filename=f) }}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-light border rounded-pill px-3">
+                                        <i class="fas fa-download me-1"></i> Ambil
+                                    </a>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        
-                        {# Link Lihat Berkas #}
-                        <a href="{{ url_for('download_file', nip=session['user_nip'], filename=f) }}" 
-                           target="_blank" 
-                           class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
-                            <i class="fas fa-eye me-1"></i> Lihat
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5 bg-white rounded shadow-sm text-muted">
-                        <i class="fas fa-folder-open fa-3x mb-3 opacity-25"></i>
-                        <p class="mb-0">Belum ada berkas yang Anda kirim.</p>
-                        <small>Silakan gunakan form di atas untuk mengirim berkas.</small>
-                    </div>
                     {% endfor %}
-                </div>
+                {% else %}
+                    <div class="text-center py-5 bg-white rounded shadow-sm text-muted">
+                        <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                        <p class="mb-0">Belum ada berkas di lemari digital Anda.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
