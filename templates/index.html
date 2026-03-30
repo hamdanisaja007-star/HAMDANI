@@ -9,22 +9,19 @@
     <style>
         :root { --primary-blue: #00d2ff; --dark-bg: #1a1a1a; }
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { background: #ffffff; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 15px rgba(0,0,0,0.05); z-index: 1000; border-right: 1px solid #eef2f5; overflow-y: auto; }
-        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #f1f1f1; background: #222; color: white; }
-        .nav-label { font-size: 0.75rem; font-weight: 800; color: #888; text-transform: uppercase; padding: 25px 20px 10px; letter-spacing: 1px; }
-        .nav-link { color: #444; transition: 0.3s; margin: 2px 12px; display: flex; align-items: center; padding: 10px 15px; text-decoration: none; border-radius: 12px; font-weight: 500; }
-        .nav-link i { width: 30px; font-size: 1.1rem; }
-        .nav-link:hover { background-color: #f8f9fa; color: #00d2ff; }
-        .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); box-shadow: 0 4px 12px rgba(0, 210, 255, 0.2); }
-        .nav-link small { font-size: 0.65rem; display: block; color: inherit; opacity: 0.7; }
+        .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #333; }
+        .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
+        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
         .stat-card { transition: transform 0.2s; border: none; border-radius: 15px; }
         .stat-card:hover { transform: translateY(-5px); }
-        .profile-img-nav { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid #00d2ff; }
+        .pointer { cursor: pointer; }
         .alert-animated { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        /* Scrollbar Sidebar */
-        .sidebar::-webkit-scrollbar { width: 5px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
+        /* Style Tambahan untuk Gambar Modal */
+        .img-layanan { width: 100%; border-radius: 10px; transition: 0.3s; cursor: zoom-in; }
+        .img-layanan:hover { transform: scale(1.02); }
     </style>
 </head>
 <body>
@@ -33,92 +30,63 @@
     <div class="row">
         <div class="col-md-2 d-none d-md-block sidebar p-0 d-flex flex-column">
             <div class="sidebar-header">
-                <i class="fas fa-robot fa-2x text-info mb-2"></i>
-                <h5 class="fw-bold mb-0">SIDALAP <span class="small opacity-50">v3</span></h5>
+                <i class="fas fa-robot fa-3x text-info mb-2"></i>
+                <h5 class="fw-bold text-info mb-0">SIDALAP <span class="small text-white opacity-50">v2</span></h5>
             </div>
             
-            <div class="nav-label text-primary"><i class="fas fa-user-tie me-2"></i>Kepegawaian</div>
+            <div class="nav-label">Menu Utama</div>
             <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.path == '/profil' }}" href="/profil">
-                        <i class="fas fa-id-badge text-info"></i>
-                        <div>SIMSDM<small>Data Sumber Daya Manusia</small></div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-wallet text-success"></i><div>SIPP<small>Pendapatan Pegawai</small></div></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-file-signature text-danger"></i><div>E-VISUM<small>Visum PKB/PLKB Elektronik</small></div></a>
-                </li>
-            </ul>
-
-            <div class="nav-label text-warning"><i class="fas fa-th-large me-2"></i>Layanan Program</div>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank">
-                        <i class="fas fa-database text-primary"></i><div>SIGA<small>Sistem Informasi Keluarga</small></div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-home text-warning"></i><div>KAMPUNG KB<small>Keluarga Berkualitas</small></div></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-chart-bar text-info"></i><div>MORENA<small>Monev DAK Subbid KB</small></div></a>
-                </li>
-            </ul>
-
-            <div class="nav-label text-success"><i class="fas fa-globe me-2"></i>Layanan Umum</div>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-baby text-danger"></i><div>GENTING<small>Cegah Stunting</small></div></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-balance-scale text-secondary"></i><div>JDIH<small>Informasi Produk Hukum</small></div></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-bullhorn text-warning"></i><div>MEDIA-KIE<small>Promosi & Komunikasi</small></div></a>
-                </li>
-            </ul>
-
-            <div class="nav-label text-info"><i class="fas fa-rocket me-2"></i>Inovasi IPeKB</div>
-            <ul class="nav flex-column">
+                {% if session['user_role'] == 'admin' %}
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/dashboard' }}" href="/dashboard"><i class="fas fa-chart-line me-2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/data_pegawai' }}" href="/data_pegawai"><i class="fas fa-users me-2"></i> Data Pegawai</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comment-dots me-2"></i> Chat / Info</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/admin/berkas_masuk' }}" href="/admin/berkas_masuk"><i class="fas fa-folder-open me-2"></i> Berkas Masuk</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/dashboard' }}" href="/dashboard"><i class="fas fa-home me-2"></i> Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/profil' }}" href="/profil"><i class="fas fa-user-circle me-2"></i> Profil Saya</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/upload_berkas' }}" href="/upload_berkas"><i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas</a></li>
+                    <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link {{ 'active' if request.path == '/toko' }}" href="/toko">
-                        <i class="fas fa-shopping-basket text-warning"></i><div>SIDALAP MART<small>Ekonomi Kreatif PLKB</small></div>
+                        <i class="fas fa-shopping-bag me-2 text-warning"></i> SIDALAP Mart
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.path == '/upload_berkas' }}" href="/upload_berkas">
-                        <i class="fas fa-folder-open text-primary"></i><div>LOKER BERKAS<small>Arsip Digital Pegawai</small></div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info">
-                        <i class="fas fa-comments text-success"></i><div>CHAT & INFO<small>Pusat Komunikasi</small></div>
-                    </a>
-                </li>
-                {% if session['user_role'] == 'admin' %}
-                <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.path == '/data_pegawai' }}" href="/data_pegawai">
-                        <i class="fas fa-user-shield text-dark"></i><div>DATA PEGAWAI<small>Admin Panel</small></div>
-                    </a>
-                </li>
-                {% endif %}
             </ul>
 
-            <ul class="nav flex-column mt-auto mb-4 border-top pt-3">
-                <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> KELUAR</a></li>
+            {% if session['user_role'] != 'admin' %}
+            <div class="nav-label">Link Pekerjaan</div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="modal" data-bs-target="#modalLayanan">
+                        <i class="fas fa-th-large me-2 text-info"></i> Layanan BKKBN
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://kinerja.bkn.go.id/login" target="_blank">
+                        <i class="fas fa-external-link-alt me-2 text-warning"></i> E-Kinerja BKN
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank">
+                        <i class="fas fa-database me-2 text-success"></i> New SIGA
+                    </a>
+                </li>
+            </ul>
+            {% endif %}
+
+            <ul class="nav flex-column mt-auto mb-3">
+                <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
             </ul>
         </div>
 
         <div class="col-md-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h3 class="fw-bold text-dark mb-0">SIDALAP DASHBOARD</h3>
                     <p class="text-muted small mb-0">Kabupaten Sukabumi - {{ "Administrator" if session['user_role'] == 'admin' else user_now.nama }}</p>
                 </div>
-                <div id="clock" class="h6 fw-bold text-info border p-2 px-3 rounded-pill shadow-sm bg-white mb-0"></div>
+                <div id="clock" class="h5 fw-bold text-info border p-2 rounded-3 shadow-sm bg-white mb-0"></div>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -133,81 +101,38 @@
             {% endwith %}
 
             {% block content %}
-            {% if session['user_role'] != 'admin' and (not user_now.tmt_pangkat or not user_now.tgl_lahir) %}
-            <div class="alert alert-warning border-0 shadow-sm alert-animated d-flex align-items-center rounded-4 mb-4">
-                <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
-                <div>
-                    <h6 class="fw-bold mb-1">Penting: Data Profil Belum Lengkap!</h6>
-                    <p class="small mb-0">Silakan lengkapi <strong>TMT Pangkat</strong> dan <strong>Tanggal Lahir</strong> di menu <a href="/profil" class="fw-bold text-decoration-none">Profil Saya</a> agar sistem bisa menghitung masa pangkat/pensiun Anda.</p>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="row mb-4">
-                {% if session['user_role'] == 'admin' %}
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-white p-4 border-start border-info border-5 shadow-sm">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
-                                <div><h6 class="text-muted mb-0 small">TOTAL PLKB</h6><h3 class="fw-bold mb-0">{{ stat.total }}</h3></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-white p-4 border-start border-warning border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePangkat">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
-                                <div><h6 class="text-muted mb-0 small text-uppercase">NAIK PANGKAT</h6><h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="card stat-card bg-white p-4 border-start border-danger border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePensiun">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
-                                <div><h6 class="text-muted mb-0 small text-uppercase">JELANG PENSIUN</h6><h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3></div>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="col-md-12">
-                        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                            <div class="row align-items-center">
-                                <div class="col-md-2 text-center border-end">
-                                    <img src="{{ url_for('serve_foto', filename=user_now.foto) if user_now.foto else 'https://via.placeholder.com/150' }}" class="rounded-circle shadow-sm border border-info border-3 mb-2 profile-img-nav" style="width: 120px; height: 120px;">
-                                </div>
-                                <div class="col-md-6 px-4">
-                                    <h2 class="fw-bold text-dark mb-1">Halo, {{ user_now.nama }}!</h2>
-                                    <p class="text-muted mb-2"><i class="fas fa-id-card me-2"></i>NIP: {{ user_now.nip }}</p>
-                                    <div class="d-flex gap-2">
-                                        <span class="badge bg-info p-2 px-3 rounded-pill text-white">{{ user_now.jabatan or 'PLKB' }}</span>
-                                        <span class="badge bg-dark p-2 px-3 rounded-pill">{{ user_now.pangkat_gol or '-' }}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 border-start d-none d-md-block px-4">
-                                    <p class="mb-1 small fw-bold text-muted">WILAYAH TUGAS:</p>
-                                    <p class="mb-1"><i class="fas fa-map-marker-alt text-danger me-2"></i>Kec. {{ user_now.kecamatan or '-' }}</p>
-                                    <p class="mb-0"><i class="fas fa-home text-success me-2"></i>Desa: {{ user_now.desa_binaan or '-' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative mb-4">
-                <div style="z-index: 2; position: relative;">
-                    <h2 class="fw-bold">Layanan Digital IPeKB Sukabumi</h2>
-                    <p class="lead opacity-75">Sistem integrasi data pelaporan, kepegawaian, dan informasi lini lapangan.</p>
-                    <hr class="w-25 border-info border-2">
-                    <div class="d-flex gap-3 mt-4">
-                        <a href="/chat_info" class="btn btn-info fw-bold px-4 shadow text-white rounded-pill">PENGUMUMAN <i class="fas fa-bell ms-2"></i></a>
-                        <a href="/toko" class="btn btn-warning fw-bold px-4 shadow text-dark rounded-pill">SIDALAP MART <i class="fas fa-shopping-cart ms-2"></i></a>
-                    </div>
-                </div>
-                <i class="fas fa-shield-alt position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
-            </div>
+            {{ super() if super else "" }}
             {% endblock %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalLayanan" tabindex="-1" aria-labelledby="modalLayananLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 bg-dark text-white" style="border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title fw-bold" id="modalLayananLabel"><i class="fas fa-grid-2 me-2"></i> Menu Layanan BKKBN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='images/layanan1.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 1">
+                    </div>
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='images/layanan2.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 2">
+                    </div>
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='images/layanan3.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 3">
+                    </div>
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='images/layanan4.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 4">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light" style="border-radius: 0 0 20px 20px;">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
