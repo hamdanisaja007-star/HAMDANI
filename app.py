@@ -108,14 +108,12 @@ def auth():
     flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD (PERBAIKAN LOGIKA TAMPILAN) ---
+# --- DASHBOARD (FIX KOTAK BISA DIKLIK) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
-    
-    # Ambil SEMUA data pegawai untuk hitung statistik & notifikasi
     all_pegawai = Pegawai.query.all()
     
     stat = {
@@ -126,10 +124,13 @@ def dashboard():
     
     notif_pangkat, notif_pensiun = [], []
     for p in all_pegawai:
-        if p.tmt_pangkat and (today.year - p.tmt_pangkat.year) >= 4: notif_pangkat.append(p)
-        if p.tgl_lahir and (today.year - p.tgl_lahir.year) >= 57: notif_pensiun.append(p)
+        # Notifikasi Kenaikan Pangkat (4 tahun)
+        if p.tmt_pangkat and (today.year - p.tmt_pangkat.year) >= 4: 
+            notif_pangkat.append(p)
+        # Notifikasi Pensiun (Mulai muncul di umur 57 untuk persiapan 58)
+        if p.tgl_lahir and (today.year - p.tgl_lahir.year) >= 57: 
+            notif_pensiun.append(p)
 
-    # Filter tampilan tabel: Admin liat semua, PLKB liat dirinya sendiri
     if role == 'admin':
         pegawai_view = all_pegawai
     else:
@@ -176,7 +177,7 @@ def data_pegawai():
         flash("Data pegawai berhasil ditambahkan!", "success")
     return render_template('data_pegawai.html', pegawai=Pegawai.query.all())
 
-# --- ADMIN BERKAS MASUK ---
+# --- ADMIN BERKAS MASUK (DENGAN ROUTE DOWNLOAD) ---
 @app.route('/admin/berkas_masuk')
 def berkas_masuk():
     if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
@@ -189,6 +190,12 @@ def berkas_masuk():
                 for fn in os.listdir(path):
                     list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
     return render_template('admin_berkas.html', data=list_masuk)
+
+@app.route('/admin/download_berkas/<nip>/<filename>')
+def admin_download(nip, filename):
+    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
+    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+    return send_from_directory(path, filename)
 
 # --- PROFIL ---
 @app.route('/profil')
