@@ -53,10 +53,10 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group shadow-sm rounded-pill">
-                                <a href="/download/{{ b.nip }}/{{ b.file }}" class="btn btn-sm btn-white border-end px-3" title="Lihat/Download">
-                                    <i class="fas fa-download text-success"></i> Unduh
+                                <a href="{{ url_for('admin_download', nip=b.nip, filename=b.file) }}" class="btn btn-sm btn-white border-end px-3" title="Lihat/Download">
+                                    <i class="fas fa-download text-success me-1"></i> Unduh
                                 </a>
-                                <button class="btn btn-sm btn-white px-3" onclick="alert('Fitur Hapus Berkas Hubungi Developer')">
+                                <button class="btn btn-sm btn-white px-3" onclick="alert('Fitur Hapus Berkas Hubungi Developer (Bos Hamdani)')">
                                     <i class="fas fa-trash text-danger"></i>
                                 </button>
                             </div>
