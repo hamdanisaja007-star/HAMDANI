@@ -17,19 +17,15 @@
         .stat-card { transition: transform 0.2s; border: none; border-radius: 15px; }
         .stat-card:hover { transform: translateY(-5px); }
         .pointer { cursor: pointer; }
-        .profile-img-nav { width: 40px; height: 40px; object-fit: cover; border: 2px solid #00d2ff; }
-        .alert-animated { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        /* --- CSS KHUSUS PORTAL LAYANAN (4 LAYAR TAB) --- */
-        .portal-tabs .nav-link { color: #555; font-weight: 600; border-radius: 30px; padding: 10px 20px; margin-right: 10px; border: 1px solid #ddd; }
+        
+        /* CSS KHUSUS PORTAL LAYANAN */
+        .portal-tabs .nav-link { color: #555; font-weight: 600; border-radius: 30px; padding: 10px 20px; margin-right: 10px; border: 1px solid #ddd; background-color: white; }
         .portal-tabs .nav-link.active { background-color: var(--bkkbn-blue) !important; color: white !important; border-color: var(--bkkbn-blue); }
         
         .layanan-box { background: white; border-radius: 15px; padding: 20px; border: 1px solid #eaeaea; transition: 0.3s; display: flex; align-items: center; height: 100%; text-decoration: none; color: inherit; }
-        .layanan-box:hover { border-color: var(--bkkbn-blue); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .layanan-box:hover { border-color: var(--bkkbn-blue); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); color: var(--bkkbn-blue); }
         .layanan-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 1.4rem; flex-shrink: 0; }
         
-        /* Warna Ikon per Kategori */
         .bg-sdm { background-color: #e7f1ff; color: #007bff; }
         .bg-prog { background-color: #fff8e1; color: #fbc02d; }
         .bg-umum { background-color: #e8f5e9; color: #28a745; }
@@ -60,32 +56,16 @@
                     <li class="nav-item"><a class="nav-link {{ 'active' if request.path == '/chat_info' }}" href="/chat_info"><i class="fas fa-comments me-2"></i> Chat / Info</a></li>
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link {{ 'active' if request.path == '/toko' }}" href="/toko">
-                        <i class="fas fa-shopping-bag me-2 text-warning"></i> SIDALAP Mart
-                    </a>
-                </li>
-            </ul>
-
-            {% if session['user_role'] != 'admin' %}
-            <div class="nav-label">Link Pekerjaan</div>
-            <ul class="nav flex-column">
-                <li class="nav-item">
                     <a class="nav-link pointer" data-bs-toggle="modal" data-bs-target="#modalLayanan">
                         <i class="fas fa-th-large me-2 text-info"></i> Layanan BKKBN
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="https://kinerja.bkn.go.id/login" target="_blank">
-                        <i class="fas fa-external-link-alt me-2 text-warning"></i> E-Kinerja BKN
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="https://newsiga-siga.bkkbn.go.id/" target="_blank">
-                        <i class="fas fa-database me-2 text-success"></i> New SIGA
+                    <a class="nav-link {{ 'active' if request.path == '/toko' }}" href="/toko">
+                        <i class="fas fa-shopping-bag me-2 text-warning"></i> SIDALAP Mart
                     </a>
                 </li>
             </ul>
-            {% endif %}
 
             <ul class="nav flex-column mt-auto mb-3">
                 <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout"><i class="fas fa-power-off me-2"></i> Keluar</a></li>
@@ -124,8 +104,8 @@
         <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
             <div class="modal-header border-bottom bg-white" style="border-radius: 25px 25px 0 0; padding: 25px 30px;">
                 <div>
-                    <h4 class="modal-title fw-bold text-dark">Portal Layanan SSO BKKBN</h4>
-                    <p class="text-muted small mb-0">Pilih kategori layanan untuk melihat aplikasi tersedia.</p>
+                    <h4 class="modal-title fw-bold text-dark"><i class="fas fa-th-large text-primary me-2"></i>Portal Layanan SSO BKKBN</h4>
+                    <p class="text-muted small mb-0">Pilih kategori layanan untuk mengakses aplikasi.</p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -133,16 +113,16 @@
                 
                 <ul class="nav nav-pills portal-tabs mb-4 justify-content-center" id="pills-tab" role="tablist">
                     <li class="nav-item">
-                        <button class="nav-link active" id="pills-sdm-tab" data-bs-toggle="pill" data-bs-target="#pills-sdm" type="button"><i class="fas fa-user-tie me-2"></i>Kepegawaian</button>
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-sdm" type="button"><i class="fas fa-user-tie me-2"></i>Layanan SDM</button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" id="pills-program-tab" data-bs-toggle="pill" data-bs-target="#pills-program" type="button"><i class="fas fa-tasks me-2"></i>Layanan Program</button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-program" type="button"><i class="fas fa-tasks me-2"></i>Layanan Program</button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" id="pills-umum-tab" data-bs-toggle="pill" data-bs-target="#pills-umum" type="button"><i class="fas fa-globe me-2"></i>Layanan Umum</button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-umum" type="button"><i class="fas fa-globe me-2"></i>Layanan Umum</button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" id="pills-lain-tab" data-bs-toggle="pill" data-bs-target="#pills-lain" type="button"><i class="fas fa-ellipsis-h me-2"></i>Lainnya</button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-lain" type="button"><i class="fas fa-ellipsis-h me-2"></i>Lainnya</button>
                     </li>
                 </ul>
 
@@ -154,31 +134,34 @@
                             <div class="col-md-4"><a href="https://visum.bkkbn.go.id" target="_blank" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-file-signature"></i></div><div><h6 class="fw-bold mb-0">E-VISUM</h6><small class="text-muted">Laporan PKB/PLKB</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-wallet"></i></div><div><h6 class="fw-bold mb-0">SIPP</h6><small class="text-muted">Pendapatan Pegawai</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-graduation-cap"></i></div><div><h6 class="fw-bold mb-0">SIDIKA</h6><small class="text-muted">Kediklatan</small></div></a></div>
+                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-sdm"><i class="fas fa-briefcase-medical"></i></div><div><h6 class="fw-bold mb-0">SIPEKA</h6><small class="text-muted">Pengembangan Karir</small></div></a></div>
                         </div>
                     </div>
 
                     <div class="tab-pane fade" id="pills-program" role="tabpanel">
                         <div class="row g-3">
-                            <div class="col-md-4"><a href="https://newsiga-siga.bkkbn.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-database"></i></div><div><h6 class="fw-bold mb-0">NEW SIGA</h6><small class="text-muted">Informasi Keluarga</small></div></a></div>
+                            <div class="col-md-4"><a href="https://newsiga-siga.bkkbn.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-database"></i></div><div><h6 class="fw-bold mb-0">NEW SIGA</h6><small class="text-muted">Sistem Informasi Keluarga</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-home"></i></div><div><h6 class="fw-bold mb-0">KAMPUNG KB</h6><small class="text-muted">Keluarga Berkualitas</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-chart-line"></i></div><div><h6 class="fw-bold mb-0">MORENA</h6><small class="text-muted">Monev DAK</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-heartbeat"></i></div><div><h6 class="fw-bold mb-0">SATYAGATRA</h6><small class="text-muted">Pelayanan Keluarga</small></div></a></div>
+                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-prog"><i class="fas fa-baby"></i></div><div><h6 class="fw-bold mb-0">SIGA (YAN KB)</h6><small class="text-muted">Pelayanan Kontrasepsi</small></div></a></div>
                         </div>
                     </div>
 
                     <div class="tab-pane fade" id="pills-umum" role="tabpanel">
                         <div class="row g-3">
-                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-baby"></i></div><div><h6 class="fw-bold mb-0">GENTING</h6><small class="text-muted">Cegah Stunting</small></div></a></div>
+                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-virus-slash"></i></div><div><h6 class="fw-bold mb-0">GENTING</h6><small class="text-muted">Cegah Stunting</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-shield-alt"></i></div><div><h6 class="fw-bold mb-0">SAKINA</h6><small class="text-muted">SuperApps Keluarga</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-blind"></i></div><div><h6 class="fw-bold mb-0">SIDAYA</h6><small class="text-muted">Lansia Berdaya</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-balance-scale"></i></div><div><h6 class="fw-bold mb-0">JDIH</h6><small class="text-muted">Dokumentasi Hukum</small></div></a></div>
+                            <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-umum"><i class="fas fa-broadcast-tower"></i></div><div><h6 class="fw-bold mb-0">PPID</h6><small class="text-muted">Informasi Publik</small></div></a></div>
                         </div>
                     </div>
 
                     <div class="tab-pane fade" id="pills-lain" role="tabpanel">
                         <div class="row g-3">
+                            <div class="col-md-4"><a href="https://kinerja.bkn.go.id/login" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-chart-bar"></i></div><div><h6 class="fw-bold mb-0">E-KINERJA BKN</h6><small class="text-muted">Laporan SKP ASN</small></div></a></div>
                             <div class="col-md-4"><a href="https://srikandi.arsip.go.id/" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-file-invoice"></i></div><div><h6 class="fw-bold mb-0">SRIKANDI</h6><small class="text-muted">Kearsipan Dinamis</small></div></a></div>
-                            <div class="col-md-4"><a href="https://kinerja.bkn.go.id/login" target="_blank" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-chart-bar"></i></div><div><h6 class="fw-bold mb-0">E-KINERJA BKN</h6><small class="text-muted">Laporan SKP</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-id-card-alt"></i></div><div><h6 class="fw-bold mb-0">ASN DIGITAL</h6><small class="text-muted">Pelayanan ASN</small></div></a></div>
                             <div class="col-md-4"><a href="#" class="layanan-box"><div class="layanan-icon bg-lain"><i class="fas fa-piggy-bank"></i></div><div><h6 class="fw-bold mb-0">TASPEN</h6><small class="text-muted">Asuransi Pegawai</small></div></a></div>
                         </div>
