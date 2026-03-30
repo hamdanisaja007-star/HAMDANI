@@ -9,7 +9,6 @@ app.secret_key = "sidallap_sukabumi_2026_secure"
 
 # --- KONFIGURASI (Vercel & Local) ---
 BASE_TMP = "/tmp"
-# Menggunakan v3 untuk memastikan database bersih di lingkungan Vercel
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_TMP, "sidalap_v3.db")}'
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_TMP, 'loker_berkas')
 app.config['CHAT_UPLOAD'] = os.path.join(BASE_TMP, 'chat_files')
@@ -124,32 +123,74 @@ def dashboard():
     return render_template('index.html', pegawai=pegawai_list, role=role, 
                            notif_pangkat=notif_pangkat, notif_pensiun=notif_pensiun, stat=stat)
 
-# --- LOKER BERKAS ---
+# --- LOKER BERKAS (UPDATE OTOMATIS FOLDER) ---
 @app.route('/upload_berkas')
 def upload_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
-    nip = session['user_nip']
-    target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir, exist_ok=True)
-    user_files = os.listdir(target_dir)
-    return render_template('upload.html', files=user_files)
+    user = Pegawai.query.filter_by(nip=session['user_nip']).first()
+    
+    # Membuat struktur folder digital user jika belum ada
+    user_folder = f"{user.nama.replace(' ', '_')}_{user.nip}"
+    target_path = os.path.join(app.config['UPLOAD_FOLDER'], user_folder)
+    
+    files_struktur = {}
+    if os.path.exists(target_path):
+        for sub in os.listdir(target_path):
+            sub_p = os.path.join(target_path, sub)
+            if os.path.isdir(sub_p):
+                files_struktur[sub] = os.listdir(sub_p)
+                
+    return render_template('upload.html', files_struktur=files_struktur)
 
 @app.route('/simpan_berkas', methods=['POST'])
 def simpan_berkas():
     if 'user_nip' not in session: return redirect(url_for('landing'))
+    user = Pegawai.query.filter_by(nip=session['user_nip']).first()
     file = request.files.get('file_berkas')
-    kat = request.form.get('kategori', 'LAINNYA').upper()
-    nip = session['user_nip']
+    kat = request.form.get('kategori', 'UMUM').lower()
+    
+    # Proteksi: PPPK hanya boleh masuk folder UMUM
+    if user.jenis_pegawai != 'PNS' and kat != 'umum':
+        kat = 'umum'
+        
     if file and file.filename != '' and allowed_file(file.filename):
-        target_dir = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+        user_folder = f"{user.nama.replace(' ', '_')}_{user.nip}"
+        target_dir = os.path.join(app.config['UPLOAD_FOLDER'], user_folder, kat)
         os.makedirs(target_dir, exist_ok=True)
-        fname = f"{kat}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
+        
+        fname = f"{kat.upper()}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{secure_filename(file.filename)}"
         file.save(os.path.join(target_dir, fname))
-        flash(f"Berkas {kat} Berhasil dikirim!", "success")
+        flash(f"Berkas berhasil disimpan di folder {kat.upper()}!", "success")
     else:
-        flash("Gagal! Pastikan file dipilih dan formatnya PDF/JPG/PNG.", "danger")
+        flash("Gagal! Pastikan file dipilih dan format sesuai.", "danger")
     return redirect(url_for('upload_berkas'))
+
+# --- ADMIN UNDUH ARSIP (FITUR BARU) ---
+@app.route('/admin/unduh_arsip')
+def admin_unduh_arsip():
+    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    daftar_plkb = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isdir(os.path.join(app.config['UPLOAD_FOLDER'], f))]
+    return render_template('admin_arsip.html', daftar_plkb=daftar_plkb)
+
+@app.route('/admin/lihat_berkas/<folder_name>')
+def lihat_berkas_plkb(folder_name):
+    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
+    path_user = os.path.join(app.config['UPLOAD_FOLDER'], folder_name)
+    struktur_berkas = {}
+    if os.path.exists(path_user):
+        for sub in os.listdir(path_user):
+            sub_path = os.path.join(path_user, sub)
+            if os.path.isdir(sub_path):
+                struktur_berkas[sub] = os.listdir(sub_path)
+    return render_template('admin_berkas_detail.html', folder_name=folder_name, struktur_berkas=struktur_berkas)
+
+@app.route('/download_arsip/<folder>/<kat>/<filename>')
+def download_arsip(folder, kat, filename):
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    path = os.path.join(app.config['UPLOAD_FOLDER'], folder, kat)
+    return send_from_directory(path, filename)
 
 # --- DATA PEGAWAI (ADMIN) ---
 @app.route('/data_pegawai', methods=['GET', 'POST'])
@@ -164,19 +205,11 @@ def data_pegawai():
         flash("Data pegawai berhasil ditambahkan!", "success")
     return render_template('data_pegawai.html', pegawai=Pegawai.query.all())
 
-# --- ADMIN BERKAS MASUK ---
+# --- ADMIN BERKAS MASUK (LOG LAMA TETAP ADA) ---
 @app.route('/admin/berkas_masuk')
 def berkas_masuk():
     if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
-    list_masuk = []
-    if os.path.exists(app.config['UPLOAD_FOLDER']):
-        for nip_f in os.listdir(app.config['UPLOAD_FOLDER']):
-            p = Pegawai.query.filter_by(nip=nip_f).first()
-            path = os.path.join(app.config['UPLOAD_FOLDER'], nip_f)
-            if os.path.isdir(path):
-                for fn in os.listdir(path):
-                    list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
-    return render_template('admin_berkas.html', data=list_masuk)
+    return redirect(url_for('admin_unduh_arsip'))
 
 # --- PROFIL ---
 @app.route('/profil')
@@ -237,7 +270,6 @@ def hapus_produk(id):
     if 'user_role' not in session: return redirect(url_for('landing'))
     p = Produk.query.get(id)
     if p:
-        # Opsional: Hapus file fisik jika ada
         try:
             file_path = os.path.join(app.config['PRODUK_UPLOAD'], p.foto_produk)
             if os.path.exists(file_path) and p.foto_produk != 'default_produk.png':
@@ -268,11 +300,6 @@ def kirim_pesan():
     return redirect(url_for('chat_info'))
 
 # --- FILE SERVING ---
-@app.route('/download/<nip>/<filename>')
-def download_file(nip, filename):
-    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
-    return send_from_directory(path, filename)
-
 @app.route('/foto_profil/<filename>')
 def serve_foto(filename):
     file_path = os.path.join(app.config['PROFIL_UPLOAD'], filename)
