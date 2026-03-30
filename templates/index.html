@@ -12,15 +12,16 @@
         .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
         .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #333; }
         .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
-        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; cursor: pointer; }
+        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; }
         .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
         .stat-card { transition: transform 0.2s; border: none; border-radius: 15px; }
         .stat-card:hover { transform: translateY(-5px); }
         .pointer { cursor: pointer; }
+        .profile-img-nav { width: 40px; height: 40px; object-fit: cover; border: 2px solid #00d2ff; }
         .alert-animated { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         /* Style Tambahan untuk Gambar Modal */
-        .img-layanan { width: 100%; border-radius: 10px; transition: 0.3s; cursor: zoom-in; }
+        .img-layanan { width: 100%; border-radius: 10px; border: 2px solid #ddd; transition: 0.3s; }
         .img-layanan:hover { transform: scale(1.02); }
     </style>
 </head>
@@ -58,7 +59,7 @@
             <div class="nav-label">Link Pekerjaan</div>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="modal" data-bs-target="#modalLayanan">
+                    <a class="nav-link pointer" data-bs-toggle="modal" data-bs-target="#modalLayanan">
                         <i class="fas fa-th-large me-2 text-info"></i> Layanan BKKBN
                     </a>
                 </li>
@@ -101,37 +102,193 @@
             {% endwith %}
 
             {% block content %}
-            {{ super() if super else "" }}
+            {% if session['user_role'] != 'admin' and (not user_now.tmt_pangkat or not user_now.tgl_lahir) %}
+            <div class="alert alert-warning border-0 shadow-sm alert-animated d-flex align-items-center rounded-4 mb-4">
+                <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">Penting: Data Profil Belum Lengkap!</h6>
+                    <p class="small mb-0">Silakan lengkapi <strong>TMT Pangkat</strong> dan <strong>Tanggal Lahir</strong> di menu <a href="/profil" class="fw-bold">Profil Saya</a> agar sistem bisa menghitung masa pangkat/pensiun Anda.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mb-4">
+                {% if session['user_role'] == 'admin' %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card stat-card bg-white p-4 border-start border-info border-5 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info text-white p-3 rounded-circle me-3"><i class="fas fa-users fa-2x"></i></div>
+                                <div>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Total PLKB</h6>
+                                    <h3 class="fw-bold mb-0">{{ stat.total }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card stat-card bg-white p-4 border-start border-warning border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePangkat">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning text-white p-3 rounded-circle me-3"><i class="fas fa-medal fa-2x"></i></div>
+                                <div>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Naik Pangkat</h6>
+                                    <h3 class="fw-bold mb-0">{{ notif_pangkat|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card stat-card bg-white p-4 border-start border-danger border-5 shadow-sm pointer" data-bs-toggle="collapse" data-bs-target="#collapsePensiun">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-danger text-white p-3 rounded-circle me-3"><i class="fas fa-history fa-2x"></i></div>
+                                <div>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Jelang Pensiun</h6>
+                                    <h3 class="fw-bold mb-0">{{ notif_pensiun|length }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <div class="card stat-card bg-white p-4 border-start border-success border-5 shadow-sm pointer" onclick="window.location.href='/toko'">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success text-white p-3 rounded-circle me-3"><i class="fas fa-store fa-2x"></i></div>
+                                <div>
+                                    <h6 class="text-muted mb-0 small text-uppercase">Produk Toko</h6>
+                                    <h3 class="fw-bold mb-0">Cek Toko</h3>
+                                    <small class="text-success fw-bold">SIDALAP Mart</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-md-12">
+                        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                            <div class="row align-items-center">
+                                <div class="col-md-2 text-center">
+                                    <img src="{{ url_for('serve_foto', filename=user_now.foto) if user_now.foto else 'https://via.placeholder.com/150' }}" class="rounded-circle shadow-sm border border-info border-3 mb-2" style="width: 120px; height: 120px; object-fit: cover;">
+                                </div>
+                                <div class="col-md-6">
+                                    <h2 class="fw-bold text-dark mb-1">Halo, {{ user_now.nama }}!</h2>
+                                    <p class="text-muted mb-2"><i class="fas fa-id-card me-2"></i>NIP: {{ user_now.nip }}</p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-info p-2 px-3 rounded-pill text-white">{{ user_now.jabatan or 'Jabatan Belum Diisi' }}</span>
+                                        <span class="badge bg-dark p-2 px-3 rounded-pill">{{ user_now.pangkat_gol or '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 border-start d-none d-md-block px-4">
+                                    <p class="mb-1 small fw-bold text-muted">WILAYAH TUGAS:</p>
+                                    <p class="mb-1"><i class="fas fa-map-marker-alt text-danger me-2"></i>Kec. {{ user_now.kecamatan or '-' }}</p>
+                                    <p class="mb-0"><i class="fas fa-home text-success me-2"></i>Desa: {{ user_now.desa_binaan or '-' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if session['user_role'] == 'admin' %}
+            <div class="row">
+                <div class="collapse mb-4" id="collapsePangkat">
+                    <div class="card border-0 shadow rounded-4 overflow-hidden">
+                        <div class="card-header bg-warning text-dark fw-bold py-3">
+                            <i class="fas fa-medal me-2"></i>Daftar Usulan Naik Pangkat
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr><th>Nama</th><th>NIP</th><th>TMT Terakhir</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in notif_pangkat %}
+                                    <tr>
+                                        <td class="fw-bold">{{ p.nama }}</td>
+                                        <td>{{ p.nip }}</td>
+                                        <td>{{ p.tmt_pangkat }}</td>
+                                        <td><span class="badge bg-warning text-dark">Waktunya Usul</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang masuk periode naik pangkat.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mb-4" id="collapsePensiun">
+                    <div class="card border-0 shadow rounded-4 overflow-hidden">
+                        <div class="card-header bg-danger text-white fw-bold py-3">
+                            <i class="fas fa-user-clock me-2"></i>Daftar Pegawai Jelang Pensiun
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr><th>Nama</th><th>NIP</th><th>Tgl Lahir</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in notif_pensiun %}
+                                    <tr>
+                                        <td class="fw-bold">{{ p.nama }}</td>
+                                        <td>{{ p.nip }}</td>
+                                        <td>{{ p.tgl_lahir }}</td>
+                                        <td><span class="badge bg-danger text-white">Persiapan MPP</span></td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="4" class="text-center py-4 text-muted small">Tidak ada pegawai yang pensiun tahun ini.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm p-5 bg-dark text-white rounded-4 overflow-hidden position-relative">
+                <div style="z-index: 2; position: relative;">
+                    <h2 class="fw-bold">Layanan Digital IPeKB Sukabumi</h2>
+                    <p class="lead opacity-75">Sistem integrasi data pelaporan, kepegawaian, dan informasi lini lapangan.</p>
+                    <hr class="w-25 border-info border-2">
+                    <div class="d-flex gap-3">
+                        <a href="/chat_info" class="btn btn-info fw-bold px-4 shadow text-white rounded-pill">PENGUMUMAN <i class="fas fa-bell ms-2"></i></a>
+                        <a href="/toko" class="btn btn-warning fw-bold px-4 shadow text-dark rounded-pill">SIDALAP MART <i class="fas fa-shopping-cart ms-2"></i></a>
+                    </div>
+                </div>
+                <i class="fas fa-shield-alt position-absolute text-secondary opacity-25" style="font-size: 200px; bottom: -50px; right: -20px; z-index: 1;"></i>
+            </div>
             {% endblock %}
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalLayanan" tabindex="-1" aria-labelledby="modalLayananLabel" aria-hidden="true">
+<div class="modal fade" id="modalLayanan" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-            <div class="modal-header border-0 bg-dark text-white" style="border-radius: 20px 20px 0 0;">
-                <h5 class="modal-title fw-bold" id="modalLayananLabel"><i class="fas fa-grid-2 me-2"></i> Menu Layanan BKKBN</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title fw-bold">Referensi Layanan BKKBN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 bg-light">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='images/layanan1.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 1">
+            <div class="modal-body p-4">
+                <div class="row g-3 text-center">
+                    <div class="col-6">
+                        <img src="{{ url_for('static', filename='images/layanan1.jpeg') }}" class="img-layanan mb-2" alt="Layanan 1">
+                        <p class="small fw-bold">Layanan 1</p>
                     </div>
-                    <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='images/layanan2.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 2">
+                    <div class="col-6">
+                        <img src="{{ url_for('static', filename='images/layanan2.jpeg') }}" class="img-layanan mb-2" alt="Layanan 2">
+                        <p class="small fw-bold">Layanan 2</p>
                     </div>
-                    <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='images/layanan3.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 3">
+                    <div class="col-6">
+                        <img src="{{ url_for('static', filename='images/layanan3.jpeg') }}" class="img-layanan mb-2" alt="Layanan 3">
+                        <p class="small fw-bold">Layanan 3</p>
                     </div>
-                    <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='images/layanan4.jpeg') }}" class="img-layanan shadow-sm border" alt="Layanan 4">
+                    <div class="col-6">
+                        <img src="{{ url_for('static', filename='images/layanan4.jpeg') }}" class="img-layanan mb-2" alt="Layanan 4">
+                        <p class="small fw-bold">Layanan 4</p>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer border-0 bg-light" style="border-radius: 0 0 20px 20px;">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
