@@ -16,7 +16,6 @@ app.config['PROFIL_UPLOAD'] = os.path.join(BASE_TMP, 'foto_profil')
 app.config['PRODUK_UPLOAD'] = os.path.join(BASE_TMP, 'produk_foto')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Pastikan folder sistem siap di /tmp
 for folder in [app.config['UPLOAD_FOLDER'], app.config['CHAT_UPLOAD'], app.config['PROFIL_UPLOAD'], app.config['PRODUK_UPLOAD']]:
     os.makedirs(folder, exist_ok=True)
 
@@ -26,7 +25,7 @@ def allowed_file(filename):
 
 db = SQLAlchemy(app)
 
-# --- MODELS ---
+# --- MODELS (Sesuai Struktur Bos) ---
 class Pegawai(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nip = db.Column(db.String(20), unique=True, nullable=False)
@@ -109,21 +108,20 @@ def auth():
     flash("NIP atau Password salah!", "danger")
     return redirect(url_for('landing'))
 
-# --- DASHBOARD (PERBAIKAN FITUR KLIK & LOGIN) ---
+# --- DASHBOARD (PERBAIKAN LOGIKA TAMPILAN) ---
 @app.route('/dashboard')
 def dashboard():
     if 'user_role' not in session: return redirect(url_for('landing'))
     role = session['user_role']
     today = date.today()
     
-    # Ambil semua data pegawai agar filter kotak (JS) bisa jalan
+    # Ambil SEMUA data pegawai untuk hitung statistik & notifikasi
     all_pegawai = Pegawai.query.all()
     
-    # Statistik
     stat = {
         'total': len(all_pegawai),
-        'pns': len([p for p in all_pegawai if p.jenis_pegawai == 'PNS']),
-        'pppk': len([p for p in all_pegawai if p.jenis_pegawai == 'PPPK'])
+        'pns': Pegawai.query.filter_by(jenis_pegawai='PNS').count() if all_pegawai else 0,
+        'pppk': Pegawai.query.filter_by(jenis_pegawai='PPPK').count() if all_pegawai else 0
     }
     
     notif_pangkat, notif_pensiun = [], []
@@ -131,7 +129,7 @@ def dashboard():
         if p.tmt_pangkat and (today.year - p.tmt_pangkat.year) >= 4: notif_pangkat.append(p)
         if p.tgl_lahir and (today.year - p.tgl_lahir.year) >= 57: notif_pensiun.append(p)
 
-    # Filter tampilan tabel (PLKB cuma liat dirinya sendiri, Admin liat semua)
+    # Filter tampilan tabel: Admin liat semua, PLKB liat dirinya sendiri
     if role == 'admin':
         pegawai_view = all_pegawai
     else:
@@ -165,20 +163,31 @@ def simpan_berkas():
         flash("Gagal! Pilih file PDF/JPG/PNG.", "danger")
     return redirect(url_for('upload_berkas'))
 
-# --- ADMIN BERKAS ---
+# --- DATA PEGAWAI (ADMIN) ---
+@app.route('/data_pegawai', methods=['GET', 'POST'])
+def data_pegawai():
+    if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        nip = request.form.get('nip')
+        nama = request.form.get('nama')
+        jenis = request.form.get('jenis_pegawai')
+        db.session.add(Pegawai(nip=nip, nama=nama, jenis_pegawai=jenis))
+        db.session.commit()
+        flash("Data pegawai berhasil ditambahkan!", "success")
+    return render_template('data_pegawai.html', pegawai=Pegawai.query.all())
+
+# --- ADMIN BERKAS MASUK ---
 @app.route('/admin/berkas_masuk')
 def berkas_masuk():
     if session.get('user_role') != 'admin': return redirect(url_for('dashboard'))
     list_masuk = []
     if os.path.exists(app.config['UPLOAD_FOLDER']):
-        try:
-            for nip_f in os.listdir(app.config['UPLOAD_FOLDER']):
-                path = os.path.join(app.config['UPLOAD_FOLDER'], nip_f)
-                if os.path.isdir(path):
-                    p = Pegawai.query.filter_by(nip=nip_f).first()
-                    for fn in os.listdir(path):
-                        list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
-        except: pass
+        for nip_f in os.listdir(app.config['UPLOAD_FOLDER']):
+            p = Pegawai.query.filter_by(nip=nip_f).first()
+            path = os.path.join(app.config['UPLOAD_FOLDER'], nip_f)
+            if os.path.isdir(path):
+                for fn in os.listdir(path):
+                    list_masuk.append({'nama': p.nama if p else nip_f, 'nip': nip_f, 'file': fn, 'kat': fn.split('_')[0]})
     return render_template('admin_berkas.html', data=list_masuk)
 
 # --- PROFIL ---
@@ -204,7 +213,7 @@ def update_profil():
         flash("Profil berhasil diperbarui!", "success")
     return redirect(url_for('profil'))
 
-# --- TOKO & CHAT ---
+# --- SIDALAP MART (TOKO) ---
 @app.route('/toko')
 def toko():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -229,6 +238,25 @@ def tambah_produk():
     db.session.commit()
     return redirect(url_for('toko'))
 
+@app.route('/hapus_produk/<int:id>')
+def hapus_produk(id):
+    if 'user_role' not in session: return redirect(url_for('landing'))
+    p = Produk.query.get(id)
+    if p:
+        try:
+            file_path = os.path.join(app.config['PRODUK_UPLOAD'], p.foto_produk)
+            if os.path.exists(file_path) and p.foto_produk != 'default_produk.png':
+                os.remove(file_path)
+        except: pass
+        db.session.delete(p)
+        db.session.commit()
+    return redirect(url_for('toko'))
+
+@app.route('/produk_foto/<filename>')
+def serve_produk(filename):
+    return send_from_directory(app.config['PRODUK_UPLOAD'], filename)
+
+# --- CHAT & INFO ---
 @app.route('/chat_info')
 def chat_info():
     if 'user_role' not in session: return redirect(url_for('landing'))
@@ -244,11 +272,22 @@ def kirim_pesan():
     db.session.commit()
     return redirect(url_for('chat_info'))
 
+# --- FILE SERVING ---
+@app.route('/download/<nip>/<filename>')
+def download_file(nip, filename):
+    path = os.path.join(app.config['UPLOAD_FOLDER'], nip)
+    return send_from_directory(path, filename)
+
+@app.route('/foto_profil/<filename>')
+def serve_foto(filename):
+    return send_from_directory(app.config['PROFIL_UPLOAD'], filename)
+
 @app.route('/logout')
 def logout(): 
     session.clear()
     return redirect(url_for('landing'))
 
+# --- DB INIT ---
 with app.app_context(): 
     db.create_all()
 
