@@ -12,7 +12,7 @@
         .sidebar { background: #222; color: white; min-height: 100vh; position: sticky; top: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
         .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #333; }
         .nav-label { font-size: 0.7rem; font-weight: bold; color: #666; text-transform: uppercase; padding: 20px 20px 5px; }
-        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; }
+        .nav-link { color: #adb5bd; transition: 0.3s; margin: 2px 15px; display: flex; align-items: center; padding: 12px 15px; text-decoration: none; border-radius: 10px; cursor: pointer; }
         .nav-link:hover, .nav-link.active { color: white; background: linear-gradient(45deg, #00d2ff, #004e92); box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); }
         .stat-card { transition: transform 0.2s; border: none; border-radius: 15px; }
         .stat-card:hover { transform: translateY(-5px); }
@@ -20,9 +20,11 @@
         .profile-img-nav { width: 40px; height: 40px; object-fit: cover; border: 2px solid #00d2ff; }
         .alert-animated { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        /* Style Tambahan untuk Gambar Modal */
-        .img-layanan { width: 100%; border-radius: 10px; border: 2px solid #ddd; transition: 0.3s; }
-        .img-layanan:hover { transform: scale(1.02); }
+
+        /* CSS KHUSUS MODAL LAYANAN AGAR MIRIP GAMBAR CONTOH */
+        .layanan-box { background: white; border-radius: 12px; padding: 15px; border: 1px solid #eee; transition: 0.3s; display: flex; align-items: center; height: 100%; }
+        .layanan-box:hover { border-color: #00d2ff; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .layanan-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -264,31 +266,54 @@
 </div>
 
 <div class="modal fade" id="modalLayanan" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold">Referensi Layanan BKKBN</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 bg-white" style="border-radius: 20px 20px 0 0; padding: 20px 30px;">
+                <h4 class="modal-title fw-bold text-dark">Layanan Digital BKKBN</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="row g-3 text-center">
-                    <div class="col-6">
-                        <img src="{{ url_for('static', filename='images/layanan1.jpeg') }}" class="img-layanan mb-2" alt="Layanan 1">
-                        <p class="small fw-bold">Layanan 1</p>
+            <div class="modal-body p-4" style="background-color: #f8f9fa;">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-primary bg-opacity-10 text-primary"><i class="fas fa-users-cog"></i></div>
+                            <div><h6 class="fw-bold mb-0">SIMSDM</h6><small class="text-muted">Manajemen SDM</small></div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <img src="{{ url_for('static', filename='images/layanan2.jpeg') }}" class="img-layanan mb-2" alt="Layanan 2">
-                        <p class="small fw-bold">Layanan 2</p>
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-warning bg-opacity-10 text-warning"><i class="fas fa-database"></i></div>
+                            <div><h6 class="fw-bold mb-0">SIGA</h6><small class="text-muted">Informasi Keluarga</small></div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <img src="{{ url_for('static', filename='images/layanan3.jpeg') }}" class="img-layanan mb-2" alt="Layanan 3">
-                        <p class="small fw-bold">Layanan 3</p>
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-success bg-opacity-10 text-success"><i class="fas fa-baby"></i></div>
+                            <div><h6 class="fw-bold mb-0">GENTING</h6><small class="text-muted">Cegah Stunting</small></div>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <img src="{{ url_for('static', filename='images/layanan4.jpeg') }}" class="img-layanan mb-2" alt="Layanan 4">
-                        <p class="small fw-bold">Layanan 4</p>
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-danger bg-opacity-10 text-danger"><i class="fas fa-file-invoice"></i></div>
+                            <div><h6 class="fw-bold mb-0">SRIKANDI</h6><small class="text-muted">Kearsipan Digital</small></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-info bg-opacity-10 text-info"><i class="fas fa-map-marked-alt"></i></div>
+                            <div><h6 class="fw-bold mb-0">E-VISUM</h6><small class="text-muted">Laporan Lapangan</small></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="layanan-box">
+                            <div class="layanan-icon bg-dark bg-opacity-10 text-dark"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div><h6 class="fw-bold mb-0">SIPEKA</h6><small class="text-muted">Pengembangan Karir</small></div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="modal-footer border-0 p-3">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
